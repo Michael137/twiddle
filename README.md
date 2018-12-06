@@ -11,6 +11,7 @@ Design
  - [ ] Optimizers (twiddler/parallelizer) -> adds annotations to AST
  - [ ] CodeGen module
  - [ ] Verifier module
+=======
 
 Outstanding Design Choices
 ==========================
