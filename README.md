@@ -22,3 +22,14 @@ Outstanding Design Choices
 - [ ] Provide option to verify code? E.g. lms-verify
 - [ ] Parallelize C code where bit-hacks were not possible. E.g. OMP, Vectorization or provide pluggable parallelizers
 - [ ] Write design document and report
+
+Resources
+=========
+* https://github.com/namin/lms-verify
+* https://www.slideshare.net/krikava/domain-specific-languages-and-scala
+* https://stanford-ppl.github.io/Delite/myfirstdsl.html
+* https://skillsmatter.com/skillscasts/3289-javascript-embedded-dsl-scala
+* https://github.com/TiarkRompf/virtualization-lms-core
+* https://github.com/julienrf/lms-tutorial
+* https://scala-lms.github.io/tutorials/04_atwork.html#__toc_id:32162
+* https://github.com/namin/metaprogramming
