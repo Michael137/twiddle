@@ -1,5 +1,7 @@
 name := "twiddle"
 
+scalaOrganization := "org.scala-lang.virtualized"
+
 resolvers += Resolver.sonatypeRepo("snapshots")
 
 libraryDependencies += "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.0"
