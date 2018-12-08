@@ -20,7 +20,7 @@ DSL Overview
 * Bit-wise operators: |, &, ~, >>, <<, ^
 * Logical operators: &&, ||, ==, <, >, <=, =>, !=
 * Optimized builtins: log2, log10, sqrt, ceil, has_zero, byte_{eq,gt,lt,gte,lte}, signof, abs, min, max, count_bits_set, rev_bits, swap_bits, %, is_power_2, next_power_2
-* Optimizations on constructs: vectorize/unroll loops, high-level op -> bit-operation
+* Optimizations on constructs: vectorize/unroll loops, high-level op -> bit-operation, branch -> bit-operations without branches
 
 Example:
 ```
