@@ -52,3 +52,4 @@ Resources
 * https://scala-lms.github.io/tutorials/04_atwork.html#__toc_id:32162
 * https://github.com/namin/metaprogramming
 * https://graphics.stanford.edu/~seander/bithacks.html
+* https://www.youtube.com/watch?v=16A1yemmx-w
