@@ -1,6 +1,6 @@
 Overview
 ========
-Write high-level control flow => get optimized bit-twiddled parallel C code
+Write high-level control flow => get correct optimized bit-twiddled parallel C code
 
 Design
 ======
@@ -11,6 +11,24 @@ Design
   - [ ] Optimizers (twiddler/parallelizer) => adds annotations to AST
   - [ ] CodeGen module
   - [ ] Verifier module
+
+DSL Overview
+============
+* Primitives: integers, bit-vector
+* Constructs: coniditionals, for loops, while loops, do loops
+* Arithmetics: +, -, *, /, **
+* Bit-wise operators: |, &, ~, >>, <<, ^
+* Logical operators: &&, ||, ==, <, >, <=, =>, !=
+* Optimized builtins: log2, log10, sqrt, ceil, has_zero, byte_{eq,gt,lt,gte,lte}, signof, abs, min, max, count_bits_set, rev_bits, swap_bits, %, is_power_2, next_power_2
+* Optimizations on constructs: vectorize/unroll loops, high-level op -> bit-operation
+
+Example:
+```
+x = 20
+y = 10
+if( has_zero(x) )
+    swap_bits(y, log10(x))
+```
 
 Outstanding Design Choices
 ==========================
@@ -33,3 +51,4 @@ Resources
 * https://github.com/julienrf/lms-tutorial
 * https://scala-lms.github.io/tutorials/04_atwork.html#__toc_id:32162
 * https://github.com/namin/metaprogramming
+* https://graphics.stanford.edu/~seander/bithacks.html
