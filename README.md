@@ -42,6 +42,7 @@ if( has_zero(x) )
 - [ ] Add code generation facilities to core language
 - [ ] Add optimization facilities
 - [ ] Build out core library
+- [ ] OpenMP codegen for LMS?
 - [ ] Add verifier and extend
 
 # Resources
@@ -58,3 +59,9 @@ if( has_zero(x) )
 * https://graphics.stanford.edu/~seander/bithacks.html
 * https://www.youtube.com/watch?v=16A1yemmx-w
 * https://github.com/scala-lms/tutorials/blob/master/src/test/scala/lms/tutorial/dslapi.scala
+* https://github.com/TiarkRompf/virtualization-lms-core/blob/v1.0.0/test-src/epfl/test14-scratch/TestCGen.scala
+! https://github.com/TiarkRompf/virtualization-lms-core/blob/v1.0.0/src/internal/CCodegen.scala
+* https://scala-lms.github.io/tutorials/04_atwork.html
+* https://github.com/TiarkRompf/virtualization-lms-core/blob/361a806f674cd12d9d31655bd0f30664a451ad9f/src/internal/CCodegen.scala
+* https://github.com/TiarkRompf/virtualization-lms-core/blob/361a806f674cd12d9d31655bd0f30664a451ad9f/src/common/Packages.scala -> CCodeGenPkg
+* https://github.com/namin/lms-verify/blob/4e43e5669285c1ae98adf97848da497000b0d182/src/main/scala/lms/verify/Core.scala -> CCodeGenDSL
