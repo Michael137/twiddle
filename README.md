@@ -1,8 +1,8 @@
-Overview
+# Overview
 ========
 Write high-level control flow => get correct optimized bit-twiddled parallel C code
 
-Design
+# Design
 ======
 * Embedded DSL
   * Host language: Scala
@@ -12,7 +12,7 @@ Design
   - [ ] CodeGen module
   - [ ] Verifier module
 
-DSL Overview
+## DSL Overview
 ============
 * Primitives: integers, bit-vector
 * Constructs: coniditionals, for loops, while loops, do loops
@@ -30,7 +30,7 @@ if( has_zero(x) )
     swap_bits(y, log10(x))
 ```
 
-Outstanding Design Choices
+## Outstanding Design Choices
 ==========================
 - [x] Choose host language
   - Scala
@@ -41,7 +41,15 @@ Outstanding Design Choices
 - [ ] Parallelize C code where bit-hacks were not possible. E.g. OMP, Vectorization or provide pluggable parallelizers
 - [ ] Write design document and report
 
-Resources
+## TODO
+====
+- [ ] Implement tagless interpreter for core object language ([see language overview](#dsl-overview))
+- [ ] Add code generation facilities to core language
+- [ ] Add optimization facilities
+- [ ] Build out core library
+- [ ] Add verifier and extend
+
+# Resources
 =========
 * https://github.com/namin/lms-verify
 * https://www.slideshare.net/krikava/domain-specific-languages-and-scala
@@ -53,3 +61,4 @@ Resources
 * https://github.com/namin/metaprogramming
 * https://graphics.stanford.edu/~seander/bithacks.html
 * https://www.youtube.com/watch?v=16A1yemmx-w
+* https://github.com/scala-lms/tutorials/blob/master/src/test/scala/lms/tutorial/dslapi.scala
