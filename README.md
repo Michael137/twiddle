@@ -1,9 +1,7 @@
 # Overview
-========
 Write high-level control flow => get correct optimized bit-twiddled parallel C code
 
 # Design
-======
 * Embedded DSL
   * Host language: Scala
   - [ ] Parser
@@ -13,7 +11,6 @@ Write high-level control flow => get correct optimized bit-twiddled parallel C c
   - [ ] Verifier module
 
 ## DSL Overview
-============
 * Primitives: integers, bit-vector
 * Constructs: coniditionals, for loops, while loops, do loops
 * Arithmetics: +, -, *, /, **
@@ -31,7 +28,6 @@ if( has_zero(x) )
 ```
 
 ## Outstanding Design Choices
-==========================
 - [x] Choose host language
   - Scala
 - [ ] Should generated code be portable? Compiler intrinsics/ifdefs/etc. or not
@@ -42,7 +38,6 @@ if( has_zero(x) )
 - [ ] Write design document and report
 
 ## TODO
-====
 - [ ] Implement tagless interpreter for core object language ([see language overview](#dsl-overview))
 - [ ] Add code generation facilities to core language
 - [ ] Add optimization facilities
@@ -50,7 +45,6 @@ if( has_zero(x) )
 - [ ] Add verifier and extend
 
 # Resources
-=========
 * https://github.com/namin/lms-verify
 * https://www.slideshare.net/krikava/domain-specific-languages-and-scala
 * https://stanford-ppl.github.io/Delite/myfirstdsl.html
