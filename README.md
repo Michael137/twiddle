@@ -59,6 +59,8 @@ if( has_zero(x) )
 * https://github.com/julienrf/lms-tutorial
 * https://scala-lms.github.io/tutorials/04_atwork.html#__toc_id:32162
 * https://github.com/namin/metaprogramming
+* https://github.com/namin/metaprogramming/blob/master/lectures/4a-dsls/syntax.scala
+* https://www.cl.cam.ac.uk/~na482/meta/slides-4a.pdf
 * https://graphics.stanford.edu/~seander/bithacks.html
 * https://www.youtube.com/watch?v=16A1yemmx-w
 * https://github.com/scala-lms/tutorials/blob/master/src/test/scala/lms/tutorial/dslapi.scala
