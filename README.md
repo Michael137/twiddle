@@ -44,6 +44,12 @@ if( has_zero(x) )
 - [ ] Build out core library
 - [ ] OpenMP codegen for LMS?
 - [ ] Add verifier and extend
+- [ ] ScalaTest support
+
+# Instructions
+1. Run LMS [installation instructions](https://github.com/TiarkRompf/virtualization-lms-core)
+2. sbt
+3. run
 
 # Resources
 * https://github.com/namin/lms-verify
@@ -52,7 +58,7 @@ if( has_zero(x) )
 * https://skillsmatter.com/skillscasts/3289-javascript-embedded-dsl-scala
 * https://github.com/TiarkRompf/virtualization-lms-core
 * https://github.com/julienrf/lms-tutorial
-* https://scala-lms.github.io/tutorials/04_atwork.html#__toc_id:32162
+* https://scala-lms.github.io/tutorials/04_atwork.html
 * https://github.com/namin/metaprogramming
 * https://github.com/namin/metaprogramming/blob/master/lectures/4a-dsls/syntax.scala
 * https://www.cl.cam.ac.uk/~na482/meta/slides-4a.pdf
@@ -65,3 +71,4 @@ if( has_zero(x) )
 * https://github.com/TiarkRompf/virtualization-lms-core/blob/361a806f674cd12d9d31655bd0f30664a451ad9f/src/internal/CCodegen.scala
 * https://github.com/TiarkRompf/virtualization-lms-core/blob/361a806f674cd12d9d31655bd0f30664a451ad9f/src/common/Packages.scala -> CCodeGenPkg
 * https://github.com/namin/lms-verify/blob/4e43e5669285c1ae98adf97848da497000b0d182/src/main/scala/lms/verify/Core.scala -> CCodeGenDSL
+* https://stanford-ppl.github.io/Delite/faq.html

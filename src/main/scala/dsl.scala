@@ -1,6 +1,7 @@
 package twiddle.dsl
 
 import scala.lms.common._
+import java.io.{PrintWriter,StringWriter,FileOutputStream}
 import scala.reflect._
 import scala.collection.BitSet
 import scala.language.higherKinds
