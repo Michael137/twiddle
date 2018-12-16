@@ -9,35 +9,20 @@ import scala.io._
 import java.io.{PrintStream, OutputStream}
 
 // DSL Interface
-trait Dsl extends PrimitiveOps with NumericOps with BooleanOps
-                              with LiftString with LiftPrimitives with LiftNumeric
-                              with LiftBoolean with IfThenElse with Equal
-                              with RangeOps with OrderingOps with MiscOps
-                              with ArrayOps with StringOps with SeqOps
-                              with Functions with While with StaticData
-                              with Variables with LiftVariables with ObjectOps {
-  override def infix_&&(lhs: Rep[Boolean], rhs: => Rep[Boolean])(implicit pos: scala.reflect.SourceContext): Rep[Boolean] =
-    __ifThenElse(lhs, rhs, unit(false))
+/*
+  LiftVariables: to stage variables i.e. be able to use pass variables to staged code
+  LiftNumeric: to allow mixed non-Rep and Rep integers in same expressions
+ */
+trait Dsl extends ScalaOpsPkg with LiftVariables with LiftNumeric {
   def generate_comment(l: String): Rep[Unit]
   def comment[A:Typ](l: String, verbose: Boolean = true)(b: => Rep[A]): Rep[A]
 }
 
 // DSL Implementation
-trait DslExp extends Dsl with PrimitiveOpsExpOpt with NumericOpsExpOpt with BooleanOpsExp
-                        with IfThenElseExpOpt with EqualExpBridgeOpt with RangeOpsExp
-                        with OrderingOpsExp with MiscOpsExp with EffectExp
-                        with ArrayOpsExpOpt with StringOpsExp with SeqOpsExp
-                        with FunctionsRecursiveExp with WhileExp with StaticDataExp
-                        with VariablesExpOpt with ObjectOpsExpOpt {
-  override def boolean_or(lhs: Exp[Boolean], rhs: Exp[Boolean])(implicit pos: SourceContext) : Exp[Boolean] = lhs match {
-    case Const(false) => rhs
-    case _ => super.boolean_or(lhs, rhs)
-  }
-  override def boolean_and(lhs: Exp[Boolean], rhs: Exp[Boolean])(implicit pos: SourceContext) : Exp[Boolean] = lhs match {
-    case Const(true) => rhs
-    case _ => super.boolean_and(lhs, rhs)
-  }
-
+/*
+   IfThenElseExpOpt: to optimize out dead branches
+ */
+trait DslExp extends Dsl with ScalaOpsPkgExp {
   case class GenerateComment(l: String) extends Def[Unit]
   def generate_comment(l: String) = reflectEffect(GenerateComment(l))
 
@@ -55,23 +40,11 @@ trait DslExp extends Dsl with PrimitiveOpsExpOpt with NumericOpsExpOpt with Bool
 }
 
 // DSL C Codegen
-trait DslGen extends CGenNumericOps
-  with CGenPrimitiveOps with CGenBooleanOps with CGenIfThenElse
-  with CGenEqual with CGenRangeOps with CGenOrderingOps
-  with CGenMiscOps with CGenArrayOps with CGenStringOps
-  with CGenSeqOps with CGenFunctions with CGenWhile
-  with CGenStaticData with CGenVariables
-  with CGenObjectOps {
+trait DslGen extends CCodeGenPkg {
   val IR: DslExp
 
   import IR._
 
-  override def quote(x: Exp[Any]) = x match {
-    case Const('\n') if x.tp == typ[Char] => "'\\n'"
-    case Const('\t') if x.tp == typ[Char] => "'\\t'"
-    case Const(0)    if x.tp == typ[Char] => "'\\0'"
-    case _ => super.quote(x)
-  }
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
     case IfThenElse(c,Block(Const(true)),Block(Const(false))) =>
       emitValDef(sym, quote(c))
@@ -80,7 +53,6 @@ trait DslGen extends CGenNumericOps
     case GenerateComment(s) =>
       stream.println("// "+s)
     case Comment(s, verbose, b) =>
-      stream.println("val " + quote(sym) + " = {")
       stream.println("//#" + s)
       if (verbose) {
         stream.println("// generated code for " + s.replace('_', ' '))
@@ -90,7 +62,6 @@ trait DslGen extends CGenNumericOps
       emitBlock(b)
       stream.println(quote(getBlockResult(b)))
       stream.println("//#" + s)
-      stream.println("}")
     case _ => super.emitNode(sym, rhs)
   }
 }

@@ -21,7 +21,8 @@ object Main {
               if (b) 1 else x
             }
 
-            compute(x==1)
+            // compute(x==1)
+            compute(1==1)
           }
         }
         println(snippet.code)
@@ -36,5 +37,19 @@ object Main {
         }
       }
       println(range_snippet.code)
+
+      val test_snipet = new DslDriver[Int,Unit] {
+        def snippet(x: Rep[Int]) = {
+
+          def compute(b: Boolean): String = {
+            // the if is executed in the first stage
+            if (b) "Hello" else "World!"
+          }
+
+          var y = compute(x==1)
+          println(y)
+        }
+      }
+      println(test_snipet.code)
     }
 }
