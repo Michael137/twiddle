@@ -8,12 +8,49 @@ import scala.reflect.SourceContext
 import scala.io._
 import java.io.{PrintStream, OutputStream}
 
+trait MathOps extends Base { this: Dsl =>
+  def tw_log10[A:Typ](a: Rep[Int]): Rep[Int]
+  def tw_log2[A:Typ](a: Rep[Int]): Rep[Int] // TODO: should only operate on floats
+}
+trait MathOpsExp extends MathOps with BaseExp { this: DslExp =>
+  case class Log10[A](a: Rep[Int]) extends Def[Int]
+  def tw_log10[A:Typ](a: Exp[Int]): Exp[Int] = Log10(a)
+  
+  case class Log2[A](a: Rep[Int]) extends Def[Int]
+  def tw_log2[A:Typ](a: Exp[Int]): Exp[Int] = Log2(a)
+}
+trait CGenUtilOps extends CGenBase {
+  val IR: MathOpsExp
+  import IR._
+
+  override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
+    case Log10(a) =>
+      // emitVarDecl(__newVar(.asInstanceOf[Sym[Variable[Any]]]))
+      // emitNode(a.asInstanceOf[Sym[Variable[Any]]], )
+      val qa = quote(a)
+      emitValDef(sym, s"""($qa >= 1000000000) ? 9 : ($qa >= 100000000) ? 8 : ($qa >= 10000000) ? 7 : 
+                          ($qa >= 1000000) ? 6 : ($qa >= 100000) ? 5 : ($qa >= 10000) ? 4 : 
+                          ($qa >= 1000) ? 3 : ($qa >= 100) ? 2 : ($qa >= 10) ? 1 : 0;""")
+    case Log2(a) =>
+      // emitVarDecl(__newVar(.asInstanceOf[Sym[Variable[Any]]]))
+      // emitNode(a.asInstanceOf[Sym[Variable[Any]]], )
+      val qa = quote(a)
+      emitValDef(sym, s"""0""")
+      emitAssignment(sym, s"""*(const int *) &${qa};""")
+      emitAssignment(sym, s"""(${quote(sym)} >> 23) - 127;""")
+    case _ => super.emitNode(sym, rhs)
+  }
+}
+
 // DSL Interface
 /*
-  LiftVariables: to stage variables i.e. be able to use pass variables to staged code
+  LiftVariables: to stage variables i.e. be able to pass variables to staged code
   LiftNumeric: to allow mixed non-Rep and Rep integers in same expressions
  */
-trait Dsl extends ScalaOpsPkg with LiftVariables with LiftNumeric {
+trait Dsl extends PrimitiveOps with NumericOps with BooleanOps with LiftString with LiftPrimitives
+                                with LiftNumeric with LiftBoolean with IfThenElse with Equal with RangeOps
+                                with OrderingOps with MiscOps with ArrayOps with StringOps with SeqOps
+                                with Functions with While with StaticData with Variables with LiftVariables with ObjectOps with MathOps {
   def generate_comment(l: String): Rep[Unit]
   def comment[A:Typ](l: String, verbose: Boolean = true)(b: => Rep[A]): Rep[A]
 }
@@ -22,7 +59,11 @@ trait Dsl extends ScalaOpsPkg with LiftVariables with LiftNumeric {
 /*
    IfThenElseExpOpt: to optimize out dead branches
  */
-trait DslExp extends Dsl with ScalaOpsPkgExp {
+trait DslExp extends Dsl with PrimitiveOpsExpOpt with NumericOpsExpOpt
+                          with BooleanOpsExp with IfThenElseExpOpt with EqualExpBridgeOpt with RangeOpsExp
+                          with OrderingOpsExp with MiscOpsExp with EffectExp with ArrayOpsExpOpt with StringOpsExp
+                          with SeqOpsExp with FunctionsRecursiveExp with WhileExp with StaticDataExp with VariablesExpOpt
+                          with ObjectOpsExpOpt with MathOpsExp {
   case class GenerateComment(l: String) extends Def[Unit]
   def generate_comment(l: String) = reflectEffect(GenerateComment(l))
 
@@ -40,7 +81,13 @@ trait DslExp extends Dsl with ScalaOpsPkgExp {
 }
 
 // DSL C Codegen
-trait DslGen extends CCodeGenPkg {
+trait DslGen extends CGenNumericOps
+    with CGenPrimitiveOps with CGenBooleanOps with CGenIfThenElse
+    with CGenEqual with CGenRangeOps with CGenOrderingOps
+    with CGenMiscOps with CGenArrayOps with CGenStringOps
+    with CGenSeqOps with CGenFunctions with CGenWhile
+    with CGenStaticData with CGenVariables
+    with CGenObjectOps with CGenUtilOps {
   val IR: DslExp
 
   import IR._

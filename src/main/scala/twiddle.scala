@@ -4,52 +4,105 @@ import twiddle.lms.dsl.DslDriver
 import scala.lms.common._
 
 object Main {
-    def main(args: Array[String]): Unit = {
-        println(example1(Show))
-        println(example1(Eval))
 
-        println(example2(Show))
-        println(example2(Eval)({ x: Int => x + x })(10))
-        // ? println(exampleX(Stage))
-        // ? println(exampleX(Optimize))
+def testDsl() = {
+  println(example1(Show))
+  println(example1(Eval))
 
-        val snippet = new DslDriver[Int,Int] {
-          def snippet(x: Rep[Int]) = {
+  println(example2(Show))
+  println(example2(Eval)({ x: Int => x + x })(10))
+  // ? println(exampleX(Stage))
+  // ? println(exampleX(Optimize))
+}
 
-            def compute(b: Rep[Boolean]): Rep[Int] = {
-              // the if is executed in the first stage
-              if (b) 1 else x
-            }
+def testLmsDsl() = {
+  val snippet = new DslDriver[Int,Int] {
+      def snippet(x: Rep[Int]) = {
 
-            // compute(x==1)
-            compute(1==1)
-          }
+        def compute(b: Rep[Boolean]): Rep[Int] = {
+          // the if is executed in the first stage
+          if (b) 1 else x
         }
-        println(snippet.code)
 
-      val range_snippet = new DslDriver[Int,Unit] {
-        def snippet(x: Rep[Int]) = comment("for", verbose = false) {
-
-          for (i <- (0 until x): Rep[Range]) {
-            println(i)
-          }
-
-        }
+        // compute(x==1)
+        compute(1==1)
       }
-      println(range_snippet.code)
-
-      val test_snipet = new DslDriver[Int,Unit] {
-        def snippet(x: Rep[Int]) = {
-
-          def compute(b: Boolean): String = {
-            // the if is executed in the first stage
-            if (b) "Hello" else "World!"
-          }
-
-          var y = compute(x==1)
-          println(y)
-        }
-      }
-      println(test_snipet.code)
     }
+    println(snippet.code)
+
+  val range_snippet = new DslDriver[Int,Unit] {
+    def snippet(x: Rep[Int]) = comment("for", verbose = false) {
+
+      for (i <- (0 until x): Rep[Range]) {
+        println(i)
+      }
+
+    }
+  }
+  println(range_snippet.code)
+
+  val test_snipet = new DslDriver[Int,Unit] {
+    def snippet(x: Rep[Int]) = {
+
+      def compute(b: Boolean): String = {
+        // the if is executed in the first stage
+        if (b) "Hello" else "World!"
+      }
+
+      var y = compute(x==1)
+      println(y)
+    }
+  }
+  println(test_snipet.code)
+
+  val test_xor = new DslDriver[Int,Unit] {
+    def snippet(x: Rep[Int]) = {
+
+      def compute(b: Boolean): Int = {
+        val x = 0x55
+        val y = x ^ 0x20
+        y
+      }
+      println(compute(x==1))
+    }
+  }
+  println(test_xor.code)
+
+  val test_mod = new DslDriver[Int,Unit] {
+    def snippet(x: Rep[Int]) = {
+
+      def compute(b: Rep[Int]): Rep[Int] = {
+        val x = 0x55
+        val y = (b % 2) ^ (x & b)
+        tw_log10(y)
+      }
+      println(compute(24))
+    }
+  }
+  println(test_mod.code)
+
+  val test_log2 = new DslDriver[Int,Unit] {
+    def snippet(x: Rep[Int]) = {
+
+      def compute(b: Rep[Int]): Rep[Int] = {
+        val x = 0x55
+        val y = (b % 2) ^ (x & b)
+        tw_log2(y)
+      }
+      println(compute(5))
+    }
+  }
+  println(test_log2.code)
+}
+
+def testArithDsl() = {
+
+}
+
+def main(args: Array[String]): Unit = {
+    // testDsl
+    // testLmsDsl
+    testArithDsl()
+}
+
 }
