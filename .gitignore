@@ -3,3 +3,6 @@ target/
 *.iml
 *.c
 *.out
+*.aux
+*.log
+*.bak

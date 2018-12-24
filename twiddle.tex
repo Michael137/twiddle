@@ -1,0 +1,25 @@
+\documentclass{article}
+\title{Twiddle -- A DSL for the Functional Bit-hacker}
+\author{Michael Buch}
+
+\usepackage[inline]{enumitem} % inline numbered lists
+\usepackage[left=2cm,right=2cm]{geometry}
+\usepackage{verbatim} % for comments
+
+\begin{document}
+\maketitle
+\frenchspacing
+
+\begin{abstract}
+It is useful (and fun!) to bit tiwddle i.e. perform arithmetic and manipulate data at the granularity of individual bits. Traditionally there is a compromise one has to make between using a low-level unsafe language that allows bit-twiddling versus a safe high-level language in which the type system or language design prohibit operations at bit-level (without additional complexity). The \textit{Twiddle} domain-specific language (DSL) is an embedded language written in Scala using the Lightweight Modular Staging (LMS) framework that generates C code. Bit-twiddling is allowed in one of two forms:
+\begin{enumerate*}[label=(\arabic*)]
+	\item Operations on a Bit primitive type in the Twiddle language
+	\item Using common programming patterns that efficiently transform to bit-twiddling code
+\end{enumerate*}.
+Thus our language is a tool for the curious, a tool for safe bit-hackers and a tool for someone looking to get a bit more performance out of his high-level language.
+\end{abstract}
+
+
+\bibliographystyle{ieeetran}
+\bibliography{twiddle}
+\end{document}
