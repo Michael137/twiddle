@@ -31,7 +31,7 @@ def testLmsDsl() = {
     println(snippet.code)
 
   val range_snippet = new DslDriver[Int,Unit] {
-    def snippet(x: Rep[Int]) = comment("for", verbose = false) {
+    def snippet(x: Rep[Int]) = {
 
       for (i <- (0 until x): Rep[Range]) {
         println(i)
@@ -81,18 +81,19 @@ def testLmsDsl() = {
   }
   println(test_mod.code)
 
-  val test_log2 = new DslDriver[Int,Unit] {
-    def snippet(x: Rep[Int]) = {
-
-      def compute(b: Rep[Int]): Rep[Int] = {
-        val x = 0x55
-        val y = (b % 2) ^ (x & b)
-        tw_log2(y)
-      }
-      println(compute(5))
+  val test_log2 = new DslDriver[Float,Unit] {
+    def snippet(x: Rep[Float]) = {
+      println(tw_log2(x))
     }
   }
   println(test_log2.code)
+
+  val test_string = new DslDriver[String,Unit] {
+    def snippet(x: Rep[String]) = {
+      println(tw_reverse(x))
+    }
+  }
+  println(test_string.code)
 }
 
 def testArithDsl() = {
@@ -101,8 +102,8 @@ def testArithDsl() = {
 
 def main(args: Array[String]): Unit = {
     // testDsl
-    // testLmsDsl
-    testArithDsl()
+    testLmsDsl
+    // testArithDsl()
 }
 
 }

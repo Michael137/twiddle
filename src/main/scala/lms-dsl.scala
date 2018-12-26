@@ -8,36 +8,89 @@ import scala.reflect.SourceContext
 import scala.io._
 import java.io.{PrintStream, OutputStream}
 
+/*
+  TODO: Reverse string implementation (from https://codereview.stackexchange.com/questions/58959/is-this-a-fast-implementation-of-reversing-a-string):
+  char * StringReverse(char * str) 
+{
+    assert(str != NULL);
+    if (!*str) 
+    {
+        // Empty string, do nothing
+        return (str);
+    }
+
+    char * p1;
+    char * p2;
+    for (p1 = str, p2 = str + strlen(str) - 1; p2 > p1; ++p1, --p2) 
+    {
+        // XOR trick to swap integer values:
+        *p1 ^= *p2;
+        *p2 ^= *p1;
+        *p1 ^= *p2;
+    }
+
+    return (str);
+}
+*/
+
 trait MathOps extends Base { this: Dsl =>
-  def tw_log10[A:Typ](a: Rep[Int]): Rep[Int]
-  def tw_log2[A:Typ](a: Rep[Int]): Rep[Int] // TODO: should only operate on floats
+  def tw_log10(a: Rep[Int]): Rep[Int]
+  def tw_log2(a: Rep[Float]): Rep[Int] // TODO: should only operate on floats
 }
 trait MathOpsExp extends MathOps with BaseExp { this: DslExp =>
-  case class Log10[A](a: Rep[Int]) extends Def[Int]
-  def tw_log10[A:Typ](a: Exp[Int]): Exp[Int] = Log10(a)
+  case class Log10(a: Rep[Int]) extends Def[Int]
+  def tw_log10(a: Exp[Int]): Exp[Int] = Log10(a)
   
-  case class Log2[A](a: Rep[Int]) extends Def[Int]
-  def tw_log2[A:Typ](a: Exp[Int]): Exp[Int] = Log2(a)
+  case class Log2(a: Rep[Float]) extends Def[Int]
+  def tw_log2(a: Exp[Float]): Exp[Int] = Log2(a)
 }
-trait CGenUtilOps extends CGenBase {
+trait CGenMathOps extends CGenBase {
   val IR: MathOpsExp
   import IR._
 
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
     case Log10(a) =>
-      // emitVarDecl(__newVar(.asInstanceOf[Sym[Variable[Any]]]))
-      // emitNode(a.asInstanceOf[Sym[Variable[Any]]], )
       val qa = quote(a)
       emitValDef(sym, s"""($qa >= 1000000000) ? 9 : ($qa >= 100000000) ? 8 : ($qa >= 10000000) ? 7 : 
                           ($qa >= 1000000) ? 6 : ($qa >= 100000) ? 5 : ($qa >= 10000) ? 4 : 
                           ($qa >= 1000) ? 3 : ($qa >= 100) ? 2 : ($qa >= 10) ? 1 : 0;""")
     case Log2(a) =>
-      // emitVarDecl(__newVar(.asInstanceOf[Sym[Variable[Any]]]))
-      // emitNode(a.asInstanceOf[Sym[Variable[Any]]], )
       val qa = quote(a)
       emitValDef(sym, s"""0""")
       emitAssignment(sym, s"""*(const int *) &${qa};""")
       emitAssignment(sym, s"""(${quote(sym)} >> 23) - 127;""")
+    case _ => super.emitNode(sym, rhs)
+  }
+}
+
+trait StrOps extends Base { this: Dsl =>
+  def tw_reverse(a: Rep[String]): Rep[String]
+}
+trait StrOpsExp extends StrOps with BaseExp { this: DslExp =>
+  case class ReverseString(a: Rep[String]) extends Def[String]
+  def tw_reverse(a: Exp[String]): Exp[String] = ReverseString(a)
+}
+trait CGenStrOps extends CGenBase {
+  val IR: StrOpsExp
+  import IR._
+
+  // TODO: char* instead of string
+  // TODO: remove .c_str()
+  // TODO: create fresh variables from emitNode
+  // override def remap[A](m: Typ[A]): String = {
+  //   val s = m.toString
+  //   if (s.startsWith("Array["))
+  //     return remapWithRef(m.typeArguments.head)
+  //   val tpe = super.remap(m)
+  //   if (tpe.startsWith("int") || tpe.startsWith("uint") || tpe=="bool")
+  //     if (s == "Char") "char" else "int"
+  //     else if (tpe == "string") "char "
+  //     else tpe
+  // }
+
+  override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
+    case ReverseString(a) =>
+      emitVarDecl(sym)   
     case _ => super.emitNode(sym, rhs)
   }
 }
@@ -50,10 +103,9 @@ trait CGenUtilOps extends CGenBase {
 trait Dsl extends PrimitiveOps with NumericOps with BooleanOps with LiftString with LiftPrimitives
                                 with LiftNumeric with LiftBoolean with IfThenElse with Equal with RangeOps
                                 with OrderingOps with MiscOps with ArrayOps with StringOps with SeqOps
-                                with Functions with While with StaticData with Variables with LiftVariables with ObjectOps with MathOps {
-  def generate_comment(l: String): Rep[Unit]
-  def comment[A:Typ](l: String, verbose: Boolean = true)(b: => Rep[A]): Rep[A]
-}
+                                with Functions with While with StaticData with Variables with LiftVariables with ObjectOps
+                                // Defined in Twiddle
+                                with MathOps with StrOps {}
 
 // DSL Implementation
 /*
@@ -63,22 +115,9 @@ trait DslExp extends Dsl with PrimitiveOpsExpOpt with NumericOpsExpOpt
                           with BooleanOpsExp with IfThenElseExpOpt with EqualExpBridgeOpt with RangeOpsExp
                           with OrderingOpsExp with MiscOpsExp with EffectExp with ArrayOpsExpOpt with StringOpsExp
                           with SeqOpsExp with FunctionsRecursiveExp with WhileExp with StaticDataExp with VariablesExpOpt
-                          with ObjectOpsExpOpt with MathOpsExp {
-  case class GenerateComment(l: String) extends Def[Unit]
-  def generate_comment(l: String) = reflectEffect(GenerateComment(l))
-
-  case class Comment[A:Typ](l: String, verbose: Boolean, b: Block[A]) extends Def[A]
-  def comment[A:Typ](l: String, verbose: Boolean)(b: => Rep[A]): Rep[A] = {
-    val br = reifyEffects(b)
-    val be = summarizeEffects(br)
-    reflectEffect[A](Comment(l, verbose, br), be)
-  }
-
-  override def boundSyms(e: Any): List[Sym[Any]] = e match {
-    case Comment(_, _, b) => effectSyms(b)
-    case _ => super.boundSyms(e)
-  }
-}
+                          with ObjectOpsExpOpt
+                          // Defined in Twiddle
+                          with MathOpsExp with StrOpsExp {}
 
 // DSL C Codegen
 trait DslGen extends CGenNumericOps
@@ -87,28 +126,14 @@ trait DslGen extends CGenNumericOps
     with CGenMiscOps with CGenArrayOps with CGenStringOps
     with CGenSeqOps with CGenFunctions with CGenWhile
     with CGenStaticData with CGenVariables
-    with CGenObjectOps with CGenUtilOps {
+    with CGenObjectOps
+    // Defined in Twiddle
+    with CGenMathOps with CGenStrOps {
   val IR: DslExp
 
   import IR._
 
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
-    case IfThenElse(c,Block(Const(true)),Block(Const(false))) =>
-      emitValDef(sym, quote(c))
-    case PrintF(f:String,xs) =>
-      emitValDef(sym, src"printf(${Const(f)::xs})")
-    case GenerateComment(s) =>
-      stream.println("// "+s)
-    case Comment(s, verbose, b) =>
-      stream.println("//#" + s)
-      if (verbose) {
-        stream.println("// generated code for " + s.replace('_', ' '))
-      } else {
-        stream.println("// generated code")
-      }
-      emitBlock(b)
-      stream.println(quote(getBlockResult(b)))
-      stream.println("//#" + s)
     case _ => super.emitNode(sym, rhs)
   }
 }
