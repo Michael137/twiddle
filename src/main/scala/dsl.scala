@@ -6,13 +6,18 @@ import scala.reflect._
 import scala.collection.BitSet
 import scala.language.higherKinds
 import scala.math.pow
+import scala.language.implicitConversions
 
 object Syntax {
   trait Arithmetic[T[_]] {
-    def int(v: Int): T[Int]
-    def add(a: T[Int], b: T[Int]): T[Int]
-    def sub(a: T[Int], b: T[Int]): T[Int]
-    def mul(a: T[Int], b: T[Int]): T[Int]
+    // implicit def int2Float(n: Int) = n.toFloat
+    // implicit def float2Int(f: Float) = f.toInt
+    // implicit def double2Int(d: Double) = d.toInt
+
+    def num[A](v: A): T[A]
+    def add[A: Numeric](a: T[A], b: T[A]): T[A]
+    def sub[A: Numeric](a: T[A], b: T[A]): T[A]
+    def mul[A: Numeric](a: T[A], b: T[A]): T[A]
     def div(a: T[Int], b: T[Int]): T[Int]
     def mod(a: T[Int], b: T[Int]): T[Int] // Modulus
   }
@@ -26,8 +31,28 @@ object Syntax {
     def lam[A,B](f: (T[A] => T[B])): T[A => B]
     def app[A, B] : T[A => B] => (T[A] => T[B])
   }
+
+  trait CMathOps[T[_]] {
+    def num[A](v: A): T[A]
+    def log2(a: T[Int]): T[Int]
+  }
   
   trait Exp[T[_]] extends Bools[T] with Arithmetic[T] with Lambda[T]
+  trait CExp[T[_]] extends CMathOps[T]
+}
+
+object CodeGen {
+  import Syntax._
+
+  type AST[A] = List[Any]
+  implicit object CEmitAST extends CExp[AST] {
+    def num[A](v: A) = List(v)
+    def log2(a: AST[Int]): AST[Int] = {
+      // ((ptr(const(int_ptr))) addr(var("x1")));
+      // minus(rshift(var("x1"), 23), 127);
+      List(a)
+    }
+  }
 }
 
 object Interpreter {
@@ -36,12 +61,12 @@ object Interpreter {
   // Simple evaluator
   type Id[A] = A
   implicit object Eval extends Exp[Id] {
-    def add(a: Int, b: Int): Int = a + b
-    def sub(a: Int, b: Int): Int = a - b
-    def mul(a: Int, b: Int): Int = a * b
+    def add[A: Numeric](a: A, b: A): A = implicitly[Numeric[A]].plus(a,b)
+    def sub[A: Numeric](a: A, b: A): A = implicitly[Numeric[A]].minus(a,b)
+    def mul[A: Numeric](a: A, b: A): A = implicitly[Numeric[A]].times(a,b)
     def div(a: Int, b: Int): Int = a / b
     def mod(a: Int, b: Int): Int = a % b
-    def int(v: Int) = v
+    def num[A](v: A) = v
     def bool(v: Boolean) = v
     def if_[A] : Boolean => (() => A) => (() => A) => A = b => t => e => if (b) { t () } else { e () }
     def lam[A, B](f : A => B) = f
@@ -51,12 +76,12 @@ object Interpreter {
   // Pretty-printer
   type CString[A] = String
   implicit object Show extends Exp[CString] {
-    def add(a: String, b: String): String = "("+ a + " + " + b + ")"
-    def sub(a: String, b: String): String = "("+ a + " - " + b + ")"
-    def mul(a: String, b: String): String = "("+ a + " * " + b + ")"
+    def add[A: Numeric](a: CString[A], b: CString[A]): CString[A] = "("+ a + " + " + b + ")"
+    def sub[A: Numeric](a: CString[A], b: CString[A]): CString[A] = "("+ a + " - " + b + ")"
+    def mul[A: Numeric](a: CString[A], b: CString[A]): CString[A] = "("+ a + " * " + b + ")"
     def div(a: String, b: String): String = "("+ a + " / " + b + ")"
     def mod(a: String, b: String): String = "("+ a + " % " + b + ")"
-    def int(v: Int): String = v.toString
+    def num[A](v: A): String = v.toString
     def bool(v: Boolean): String = v.toString
     def if_[A] : String => (() => String) => (() => String) => String =
             b => t => e =>
@@ -70,15 +95,20 @@ object Interpreter {
     }
     def app[A,B] = (f : String) => (p : String) => s"($f $p)"
   }
+}
 
-  def example1[T[_]](s:Exp[T]) : T[Int] = {
+object Examples {
+  import Syntax._
+  import CodeGen._
+  import Interpreter._
+  def example1[T[_]](s:Exp[T]) : T[Double] = {
     import s._
     // the term is
     //    if true then 3 + 4
     //    else 5
     (if_(bool(true))
-      (() => add(int(3), int(4)))
-      (() => int(5)))
+      (() => add(num(3.5), num(3.6)))
+      (() => num(5.5)))
   }
 
   def example2[T[_]](s:Exp[T]) : T[(Int => Int) => (Int => Int)] = {
@@ -86,5 +116,10 @@ object Interpreter {
     lam[Int => Int,Int => Int] (f =>
       lam[Int,Int] (x => 
         app (f) (app(f)(x))))
+  }
+
+  def example3[T[_]](s:CExp[T]) : T[Int] = {
+    import s._
+    log2(num(20))
   }
 }

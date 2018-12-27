@@ -1,5 +1,7 @@
 import twiddle.dsl.Interpreter._
 import twiddle.dsl.Syntax._
+import twiddle.dsl.CodeGen._
+import twiddle.dsl.Examples._
 import twiddle.lms.dsl.DslDriver
 import scala.lms.common._
 
@@ -11,8 +13,10 @@ def testDsl() = {
 
   println(example2(Show))
   println(example2(Eval)({ x: Int => x + x })(10))
-  // ? println(exampleX(Stage))
+  //println(exampleX(Staged))
   // ? println(exampleX(Optimize))
+
+  println(example3(CEmitAST))
 }
 
 def testLmsDsl() = {
@@ -96,14 +100,20 @@ def testLmsDsl() = {
   println(test_string.code)
 }
 
-def testArithDsl() = {
+def testTwDsl() = {
+  import twiddle.dsl.eval._
+  def Y(c: Boolean) = L(c, "fun", A(L(c, "F", A(V("F"), List(V("F")))), List(L(c, "F", A(V("fun"), List(L(c, "x", A(A(V("F"), List(V("F"))), List(V("x"))))))))))
+  def fib(c: Boolean) = L(c, "fib", L(c, "n", If(A(P("<"), List(V("n"), I(2))), V("n"), A(P("+"), List(A(V("fib"), List(A(P("-"), List(V("n"), I(1))))), A(V("fib"), List(A(P("-"), List(V("n"), I(2))))))))))
+  def sumf(c: Boolean) = L(c, "f", L(c, "sumf", L(c, "n", If(A(P("<"), List(V("n"), I(0))), I(0), A(P("+"), List(A(V("f"), List(V("n"))), A(V("sumf"), List(A(P("-"), List(V("n"), I(1)))))))))))
 
+  top_eval[NoRep](A(A(Y(false), List(fib(false))), List(I(7))))
+  //top_eval[NoRep](A(A(Y(false), List(fib(true))), List(I(7))))
 }
 
 def main(args: Array[String]): Unit = {
-    // testDsl
-    testLmsDsl
-    // testArithDsl()
+    testDsl
+    // testLmsDsl
+    // testTwDsl()
 }
 
 }

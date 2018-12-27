@@ -35,7 +35,7 @@ import java.io.{PrintStream, OutputStream}
 
 trait MathOps extends Base { this: Dsl =>
   def tw_log10(a: Rep[Int]): Rep[Int]
-  def tw_log2(a: Rep[Float]): Rep[Int] // TODO: should only operate on floats
+  def tw_log2(a: Rep[Float]): Rep[Int]
 }
 trait MathOpsExp extends MathOps with BaseExp { this: DslExp =>
   case class Log10(a: Rep[Int]) extends Def[Int]
