@@ -44,15 +44,36 @@ object Syntax {
 object CodeGen {
   import Syntax._
 
-  type AST[A] = List[Any]
-  implicit object CEmitAST extends CExp[AST] {
-    def num[A](v: A) = List(v)
+  type AST[A] = List[Term]
+  abstract class Term
+  case class IntPtr() extends Term
+  case class Const(e: Term) extends Term
+  case class Addr(e: Term) extends Term
+  case class Var(s: String) extends Term
+  case class Num[A](n: A) extends Term
+  case class Assign(v: Var, e: Term) extends Term
+  case class Decl(v: Term) extends Term
+  case class I(v: Var) extends Term // Integer
+  case class F(v: Var) extends Term // Float
+  case class D(v: Var) extends Term // Double
+  case class Rshift[A](v: Term, n: Num[A]) extends Term // >>
+  case class Minus[A](v: Term, n: Num[A]) extends Term // -
+  case class Cast(c: Term, e: Term) extends Term // -
+  
+  implicit object EmitTwiddleAST extends CExp[AST] {
+    def num[A](v: A) = List(Num(v))
     def log2(a: AST[Int]): AST[Int] = {
-      // ((ptr(const(int_ptr))) addr(var("x1")));
-      // minus(rshift(var("x1"), 23), 127);
-      List(a)
+      val List(t) = a
+      List(Decl(F(Var("x0"))),
+           Decl(I(Var("x1"))),
+           Assign(Var("x0"), t),
+           Assign(Var("x1"), Cast(Const(IntPtr()), Addr(Var("x0")))),
+           Assign(Var("x1"), Minus(Rshift(Var("x1"), Num(23)), Num(127))))
     }
   }
+
+  // TODO: Tagless interpreter for Twiddle AST
+  // either eval/pretty print code or generete C code
 }
 
 object Interpreter {
