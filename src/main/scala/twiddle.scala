@@ -17,6 +17,7 @@ def testDsl() = {
   // ? println(exampleX(Optimize))
 
   println(example3(EmitTwiddleAST))
+  eval(example3(EmitTwiddleAST))
 }
 
 def testLmsDsl() = {

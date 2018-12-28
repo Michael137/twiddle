@@ -73,7 +73,24 @@ object CodeGen {
   }
 
   // TODO: Tagless interpreter for Twiddle AST
+  // ? use LMS (eval.scala in LMS tutorial; Ops[T[_]])
   // either eval/pretty print code or generete C code
+
+  // Multi-stage evaluator
+  def eval(ast: AST[_]): Unit = ast match {
+    case hd::tl => eval_term(hd); eval(tl)
+    case _ => ()
+  }
+
+  def eval_term(t: Term): Unit = t match {
+    case Var(s) => println(s)
+    case Decl(e) => e match {
+      case F(v) => println("float"); eval_term(v)
+      case I(v) => println("int"); eval_term(v)
+      case D(v) => println("double"); eval_term(v)
+    }
+    case otherwise => println(s"Unknown AST node $otherwise")
+  }
 }
 
 object Interpreter {
