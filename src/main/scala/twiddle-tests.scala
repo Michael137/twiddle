@@ -30,8 +30,8 @@ object Examples {
     def example3[T[_]](s:CExp[T]) : T[Int] = {
         import s._
         (ifThenElse_(bool(true))
-            (() => add(num(3), num(3)))
-            (() => num(5)))
+            (() => log2(num(3)))
+            (() => add(num(2), num(5))))
     }
 }
 

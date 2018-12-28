@@ -9,12 +9,11 @@ import scala.math.pow
 import scala.language.implicitConversions
 
 object Syntax {
-  trait Arithmetic[T[_]] {
-    // implicit def int2Float(n: Int) = n.toFloat
-    // implicit def float2Int(f: Float) = f.toInt
-    // implicit def double2Int(d: Double) = d.toInt
-
+  trait Nums[T[_]] {
     def num[A](v: A): T[A]
+  }
+
+  trait Arithmetic[T[_]] {
     def add[A: Numeric](a: T[A], b: T[A]): T[A]
     def sub[A: Numeric](a: T[A], b: T[A]): T[A]
     def mul[A: Numeric](a: T[A], b: T[A]): T[A]
@@ -36,6 +35,6 @@ object Syntax {
     def log2(a: T[Int]): T[Int]
   }
   
-  trait Exp[T[_]] extends Bools[T] with Arithmetic[T] with Lambda[T]
-  trait CExp[T[_]] extends Bools[T] with Arithmetic[T] with CMathOps[T] // TODO: simply extend Exp
+  trait Exp[T[_]] extends Bools[T] with Nums[T] with Arithmetic[T] with Lambda[T]
+  trait CExp[T[_]] extends CMathOps[T] with Nums[T] with Bools[T] with Arithmetic[T]// TODO: simply extend Exp; with Arithmetic[T] with
 }

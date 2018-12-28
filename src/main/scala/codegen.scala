@@ -11,7 +11,7 @@ import scala.language.implicitConversions
 object CodeGen {
   import Syntax._
 
-  type AST[A] = List[Term]
+  type AST[A] = Tup
   abstract class Term
   case class IntPtr() extends Term
   case class Const(e: Term) extends Term
@@ -33,52 +33,29 @@ object CodeGen {
   case class Cast(c: Term, e: Term) extends Term
   case class IfThenElse(cond: Term, conseq: Term, alt: Term) extends Term
   case class Ref(e: Term) extends Term // pointer dereference
+  case class Null() extends Term // null type
+
+  case class Tup(e1: Term, e2: Term) extends Term // tuple
   
   implicit object EmitTwiddleAST extends CExp[AST] {
-    def num[A](v: A) = List(Num(v))
-    def bool(b: Boolean) = List(Bool(b))
-    def add[A: Numeric](a: AST[A], b: AST[A]): AST[A] = {
-      val List(n1) = a
-      val List(n2) = b
-      List(Plus(n1, n2))
-    }
-
-    def sub[A: Numeric](a: AST[A], b: AST[A]): AST[A] = {
-      val List(n1) = a
-      val List(n2) = b
-      List(Minus(n1, n2))
-    }
-
-    def mul[A: Numeric](a: AST[A], b: AST[A]): AST[A] = {
-      val List(n1) = a
-      val List(n2) = b
-      List(Times(n1, n2))
-    }
-
-    def div(a: AST[Int], b: AST[Int]): AST[Int] = {
-      val List(n1) = a
-      val List(n2) = b
-      List(Divide(n1, n2))
-    }
-
-    def mod(a: AST[Int], b: AST[Int]): AST[Int] = {
-      val List(n1) = a
-      val List(n2) = b
-      List(Mod(n1, n2))
-    }
-
+    def num[A](v: A) = Tup(Num(v), Null())
+    def bool(b: Boolean) = Tup(Bool(b), Null())
     def ifThenElse_[A] : AST[_] => (() => AST[_]) => (() => AST[_]) => AST[_] =
-            b => t => e => (b, t(), e()) match {
-              case (List(t0), List(t1), List(t2)) => List(IfThenElse(t0, t1, t2))
-            }
+            b => t => e => Tup(IfThenElse(b, t(), e()), Null())
+           
+    def add[A: Numeric](a: AST[A], b: AST[A]): AST[A] = Tup(Plus(a, b), Null())
+    def sub[A: Numeric](a: AST[A], b: AST[A]): AST[A] = Tup(Minus(a, b), Null())
+    def mul[A: Numeric](a: AST[A], b: AST[A]): AST[A] = Tup(Times(a, b), Null())
+    def div(a: AST[Int], b: AST[Int]): AST[Int] = Tup(Divide(a, b), Null())
+    def mod(a: AST[Int], b: AST[Int]): AST[Int] =  Tup(Mod(a, b), Null())
 
     def log2(a: AST[Int]): AST[Int] = {
-      val List(t) = a
-      List(Decl(F(Var("x0"))),
-           Decl(I(Var("x1"))),
-           Assign(Var("x0"), t),
-           Assign(Var("x1"), Ref(Cast(Const(IntPtr()), Addr(Var("x0"))))),
-           Assign(Var("x1"), Minus(Rshift(Var("x1"), Num(23)), Num(127))))
+      val Tup(t, Null()) = a
+      Tup(Decl(F(Var("x0"))),
+      Tup(Decl(I(Var("x1"))),
+      Tup(Assign(Var("x0"), t),
+      Tup(Assign(Var("x1"), Ref(Cast(Const(IntPtr()), Addr(Var("x0"))))),
+      Tup(Assign(Var("x1"), Minus(Rshift(Var("x1"), Num(23)), Num(127))), Null())))))
     }
   }
 
@@ -92,7 +69,8 @@ object CodeGen {
   // Multi-stage evaluator
   def eval(ast: AST[_]): Unit = {
     ast match {
-      case hd::tl => eval_term(hd); eval(tl)
+      case Tup(hd, Tup(tl1, tl2)) => eval_term(hd); eval(Tup(tl1, tl2))
+      case Tup(hd, Null()) => eval_term(hd)
       case _ => ()
     }
   }
@@ -116,6 +94,8 @@ object CodeGen {
     case IfThenElse(cond, conseq, alt) => print("if("); eval_term(cond); print(") {"); eval_term(conseq); print("} else {"); eval_term(alt); println("}")
     case Rshift(a, b) => print("("); eval_term(a); print(" >> "); eval_term(b); print(")")
     case Ref(e) => print("*("); eval_term(e); print(")")
+    case Tup(hd, tl) => eval_term(hd); eval_term(tl)
+    case Null() => ()
 
     case otherwise => println(s"Unknown AST node $otherwise")
   }
