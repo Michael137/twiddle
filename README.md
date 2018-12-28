@@ -26,6 +26,22 @@ y = 10
 if( has_zero(x) )
     swap_bits(y, log10(x))
 ```
+should produce
+```
+#define SWAP(a, b) (((a) ^= (b)), ((b) ^= (a)), ((a) ^= (b)))
+#define haszero(v) (((v) - 0x01010101UL) & ~(v) & 0x80808080UL)
+int x = 20;
+int y = 10;
+if( haszero(x) )
+{
+  unsigned int v = x;
+  int r;
+  r = (v >= 1000000000) ? 9 : (v >= 100000000) ? 8 : (v >= 10000000) ? 7 : 
+      (v >= 1000000) ? 6 : (v >= 100000) ? 5 : (v >= 10000) ? 4 : 
+      (v >= 1000) ? 3 : (v >= 100) ? 2 : (v >= 10) ? 1 : 0;
+  SWAP(y, r)
+}
+```
 
 ## Outstanding Design Choices
 - [x] Choose host language
