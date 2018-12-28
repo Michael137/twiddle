@@ -51,7 +51,7 @@ if( haszero(x) )
 - [x] Should aggressiveness level be adjustable?
   - Yes. Perhaps different evaluator for aggressive optimizations
 - [x] Choose codegen backend. E.g. LMS? lms-verify?
-  - No more LMS. Maybe in the long term. Documentation lacking
+  - No more LMS. Documentation is virtually non-existent. C backend is not consistent with the C language. Maybe in the long term with a few pull requests to LMS.
 - [ ] Provide option to verify code? E.g. lms-verify
 - [ ] Parallelize C code where bit-hacks were not possible. E.g. OMP, Vectorization or provide pluggable parallelizers
 
