@@ -10,7 +10,7 @@ object Examples {
     import Syntax._
     import CodeGen._
     import Interpreter._
-    def example1[T[_]](s:Exp[T]) : T[Double] = {
+    def example1[T[_]](s:Exp[T]) : Any= {
         import s._
         // the term is
         //    if true then 3 + 4
@@ -27,13 +27,17 @@ object Examples {
                 app (f) (app(f)(x))))
     }
 
-    def example3[T[_]](s:CExp[T]) : T[Int] = {
+    def example3[T[_]](s:CExp[T]) : T[(T[Any], T[Any])] = {
         import s._
-        /*(ifThenElse_(bool(true))
-            (() => log2(num(3)))
-            (() => add(num(2), num(5))))
-        add(num(5), num(5)) // ! todo should generate code for both statements*/
-        add(num(5), log2(num(3))) // ! should do the sensible "5 + result of log2(3)"
+        // ! todo should generate code for both statements
+        val if_ret = (ifThenElse_(bool(true))
+                        (() => log2(num(3)))
+                        (() => add(num(2), num(5))))
+        val add_ret = add(num(5), num(5))
+        val add_log_ret = add(num(5), log2(num(3)))
+        val add_log_twice_ret = add(log2(num(5)), log2(num(3)))
+        cdr(cdr(cdr(cons(if_ret, cons(add_ret, cons(add_log_ret, add_log_twice_ret))))))
+        // `(,if_ret ,add_ret ,add_log_ret)
     }
 }
 

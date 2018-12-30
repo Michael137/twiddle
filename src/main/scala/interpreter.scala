@@ -24,6 +24,16 @@ object Interpreter {
     def ifThenElse_[A] : Boolean => (() => A) => (() => A) => A = b => t => e => if (b) { t () } else { e () }
     def lam[A, B](f : A => B) = f
     def app[A, B] = (f : A => B) => (p : A) => f(p)
+    // def cons : Id[Any] => Id[Any] => Id[Tuple2[Id[Any], Id[Any]]] = a => b => (a, b)
+    def cons(a: Any, b: Any) = (a, b)
+    def car(t: Id[(Id[Any], Id[Any])]): Id[(Id[Any], Id[Any])] = {
+      val (hd, _) = t
+      (hd, null) // ! shouldn't need to return tuple here
+    }
+    def cdr(t: Id[(Id[Any], Id[Any])]): Id[(Id[Any], Id[Any])] = {
+      val (_, tl: Any) = t
+      (tl, null)  // ! shouldn't need to return tuple here
+    }
   }
 
   // Pretty-printer
@@ -47,5 +57,9 @@ object Interpreter {
       s"\\$x.$body"
     }
     def app[A,B] = (f : String) => (p : String) => s"($f $p)"
+    // def cons : CString[Any] => CString[Any] => CString[Tuple2[CString[Any], CString[Any]]] = a => b => s"($a,$b)"
+    def cons(a: Any, b: Any): CString[Any] = s"($a,$b)"
+    def car(t: CString[(CString[Any], CString[Any])]): CString[(CString[Any], CString[Any])] = s"(car ($t))"
+    def cdr(t: CString[(CString[Any], CString[Any])]): CString[(CString[Any], CString[Any])] = s"(cdr ($t))"
   }
 }

@@ -35,7 +35,7 @@ object CodeGen {
   case class Ref(e: Term) extends Term // pointer dereference
   case class Null() extends Term // null type
 
-  case class Tup(e1: Term, e2: Term) extends Term // tuple
+  case class Tup(e1: Any, e2: Any) extends Term // tuple // ! should be Tup(e1: Term, e2: Term)
 
   case class Result(v: Var, e: Term) extends Term
   
@@ -50,9 +50,18 @@ object CodeGen {
     def mul[A: Numeric](a: AST[A], b: AST[A]): AST[A] = Tup(Times(a, b), Null())
     def div(a: AST[Int], b: AST[Int]): AST[Int] = Tup(Divide(a, b), Null())
     def mod(a: AST[Int], b: AST[Int]): AST[Int] =  Tup(Mod(a, b), Null())
+    def cons(a: Any, b: Any) = Tup(a, b)
+    def car(t: AST[(AST[Any], AST[Any])]): AST[Any] = {
+      val Tup(a: Term, _) = t
+      a
+    }
+    def cdr(t: AST[(AST[Any], AST[Any])]): AST[Any] = {
+      val Tup(_, b: Term) = t
+      b
+    }
 
     def log2(a: AST[Int]): AST[Int] = {
-      val Tup(t, Null()) = a
+      val Tup(t: Term, Null()) = a
       Result(Var("x1"),
       Tup(Decl(F(Var("x0"))),
       Tup(Decl(I(Var("x1"))),
@@ -72,8 +81,8 @@ object CodeGen {
   // Multi-stage evaluator
   def eval(ast: AST[_]): Unit = {
     ast match {
-      case Tup(hd, Tup(tl1, tl2)) => eval_term(hd); eval(Tup(tl1, tl2))
-      case Tup(hd, Null()) => eval_term(hd)
+      case Tup(hd: Term, Tup(tl1, tl2)) => eval_term(hd); eval(Tup(tl1, tl2))
+      case Tup(hd: Term, Null()) => eval_term(hd)
       case _ => ()
     }
   }
@@ -103,9 +112,9 @@ object CodeGen {
     case IfThenElse(cond, conseq, alt) => print("if("); eval_term(cond); print(") {"); eval_term(conseq); print("} else {"); eval_term(alt); println("}")
     case Rshift(a, b) => print("("); eval_term(a); print(" >> "); eval_term(b); print(")")
     case Ref(e) => print("*("); eval_term(e); print(")")
-    case Tup(hd, tl) => eval_term(hd); eval_term(tl)
+    case Tup(hd: Term, tl: Term) => eval_term(hd); eval_term(tl)
     case Null() => ()
-
+    case Result(v, t) => eval_term(t)
     case otherwise => println(s"Unknown AST node $otherwise")
   }
 }

@@ -31,10 +31,17 @@ object Syntax {
     def app[A, B] : T[A => B] => (T[A] => T[B])
   }
 
+  trait LispLike[T[_]] {
+    // def cons : T[Any] => T[Any] => T[Tuple2[T[Any], T[Any]]]
+    def cons(a: Any, b: Any): T[(T[Any], T[Any])] // ? narrow type definitions
+    def car(t: T[(T[Any], T[Any])]): T[(T[Any], T[Any])]
+    def cdr(t: T[(T[Any], T[Any])]): T[(T[Any], T[Any])]
+  }
+
   trait CMathOps[T[_]] {
     def log2(a: T[Int]): T[Int]
   }
   
-  trait Exp[T[_]] extends Bools[T] with Nums[T] with Arithmetic[T] with Lambda[T]
-  trait CExp[T[_]] extends CMathOps[T] with Nums[T] with Bools[T] with Arithmetic[T]// TODO: simply extend Exp; with Arithmetic[T] with
+  trait Exp[T[_]] extends Bools[T] with Nums[T] with Arithmetic[T] with Lambda[T] with LispLike[T]
+  trait CExp[T[_]] extends CMathOps[T] with Nums[T] with Bools[T] with Arithmetic[T] with LispLike[T] // TODO: simply extend Exp; with Arithmetic[T] with
 }

@@ -55,6 +55,11 @@ if( haszero(x) )
 - [ ] Provide option to verify code? E.g. lms-verify
 - [ ] Parallelize C code where bit-hacks were not possible. E.g. OMP, Vectorization or provide pluggable parallelizers
 
+## Why no LMS?
+- Documentation for this use-case is hard to come by
+- The C and C++ backends are not well separated and require manual patchwork to be sound
+- Control over variable generation in the output code is not flexible (without significant complexity overhead)
+
 ## TODO
 - [x] Implement tagless interpreter for core object language ([see language overview](#dsl-overview))
 - [x] Add code generation facilities to core language
