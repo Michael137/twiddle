@@ -29,10 +29,10 @@ object Examples {
 
     def example3[T[_]](s:CExp[T]) : T[Int] = {
         import s._
-        (ifThenElse_(bool(true))
+        /*(ifThenElse_(bool(true))
             (() => log2(num(3)))
             (() => add(num(2), num(5))))
-        add(num(5), num(5)) // ! todo should generate code for both statements
+        add(num(5), num(5)) // ! todo should generate code for both statements*/
         add(num(5), log2(num(3))) // ! should do the sensible "5 + result of log2(3)"
     }
 }

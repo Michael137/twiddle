@@ -11,7 +11,7 @@ import scala.language.implicitConversions
 object CodeGen {
   import Syntax._
 
-  type AST[A] = Tup
+  type AST[A] = Term
   abstract class Term
   case class IntPtr() extends Term
   case class Const(e: Term) extends Term
@@ -36,6 +36,8 @@ object CodeGen {
   case class Null() extends Term // null type
 
   case class Tup(e1: Term, e2: Term) extends Term // tuple
+
+  case class Result(v: Var, e: Term) extends Term
   
   implicit object EmitTwiddleAST extends CExp[AST] {
     def num[A](v: A) = Tup(Num(v), Null())
@@ -51,11 +53,12 @@ object CodeGen {
 
     def log2(a: AST[Int]): AST[Int] = {
       val Tup(t, Null()) = a
+      Result(Var("x1"),
       Tup(Decl(F(Var("x0"))),
       Tup(Decl(I(Var("x1"))),
       Tup(Assign(Var("x0"), t),
       Tup(Assign(Var("x1"), Ref(Cast(Const(IntPtr()), Addr(Var("x0"))))),
-      Tup(Assign(Var("x1"), Minus(Rshift(Var("x1"), Num(23)), Num(127))), Null())))))
+      Tup(Assign(Var("x1"), Minus(Rshift(Var("x1"), Num(23)), Num(127))), Null()))))))
     }
   }
 
@@ -90,7 +93,13 @@ object CodeGen {
     case IntPtr() => print("int* ")
     case Addr(e) => print("&("); eval_term(e); print(")")
     case Minus(a, b) => eval_term(a); print(" - "); eval_term(b)
-    case Plus(a, b) => eval_term(a); print(" + "); eval_term(b)
+    case Plus(a, b) => (a, b) match {
+      // ! extract into `summarizeEffects()` function
+      case (Result(v1, t1), Result(v2, t2)) => eval_term(t1); eval_term(t2); eval_term(v1); print(" + "); eval_term(v2)
+      case (Result(v, t), exp) => eval_term(t); eval_term(exp); print(" + "); eval_term(v)
+      case (exp, Result(v, t)) => eval_term(t); eval_term(exp); print(" + "); eval_term(v)
+      case (e1, e2) => eval_term(e1); print(" + "); eval_term(e2)
+    }
     case IfThenElse(cond, conseq, alt) => print("if("); eval_term(cond); print(") {"); eval_term(conseq); print("} else {"); eval_term(alt); println("}")
     case Rshift(a, b) => print("("); eval_term(a); print(" >> "); eval_term(b); print(")")
     case Ref(e) => print("*("); eval_term(e); print(")")
