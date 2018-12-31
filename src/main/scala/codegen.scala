@@ -105,6 +105,7 @@ object CodeGen {
     ast match {
       case Tup(hd: Term, Tup(tl1, tl2)) => eval_term(hd); eval(Tup(tl1, tl2))
       case Tup(hd: Term, Null()) => eval_term(hd)
+      case Result(v, t) => eval(t)
       case _ => ()
     }
   }
@@ -137,7 +138,6 @@ object CodeGen {
     case Ref(e) => print("*("); eval_term(e); print(")")
     case Tup(hd: Term, tl: Term) => eval_term(hd); eval_term(tl)
     case Null() => ()
-    case Result(v, t) => eval_term(t)
     case Gte(e1, e2) => eval_term(e1); print(" >= "); eval_term(e2)
     case otherwise => println(s"Unknown AST node $otherwise")
   }

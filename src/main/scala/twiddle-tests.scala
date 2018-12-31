@@ -43,6 +43,7 @@ object Examples {
     def example4[T[_]](s:CExp[T]) : T[Int] = {
         import s._
         add(num(5), log10(num(10)))
+        log10(num(10))
     }
 }
 
