@@ -19,6 +19,7 @@ object CodeGen {
   case class Var(s: String) extends Term
   case class Num[A](n: A) extends Term
   case class Bool(b: Boolean) extends Term
+  case class Gte(e1: Term, e2: Term) extends Term
   case class Assign(v: Var, e: Term) extends Term
   case class Decl(v: Term) extends Term
   case class I(v: Var) extends Term // Integer
@@ -32,6 +33,7 @@ object CodeGen {
   case class Mod(v: Term, n: Term) extends Term // /
   case class Cast(c: Term, e: Term) extends Term
   case class IfThenElse(cond: Term, conseq: Term, alt: Term) extends Term
+  case class TernaryIf(cond: Term, conseq: Term, alt: Term) extends Term // TODO: DRY
   case class Ref(e: Term) extends Term // pointer dereference
   case class Null() extends Term // null type
 
@@ -69,6 +71,26 @@ object CodeGen {
       Tup(Assign(Var("x1"), Ref(Cast(Const(IntPtr()), Addr(Var("x0"))))),
       Tup(Assign(Var("x1"), Minus(Rshift(Var("x1"), Num(23)), Num(127))), Null()))))))
     }
+
+    def log10(a: AST[Int]): AST[Int] = {
+      val Tup(t: Term, Null()) = a
+      Result(Var("x1"),
+      Tup(Decl(I(Var("x1"))),
+      Tup(Assign(Var("x1"), TernaryIf(Gte(t, Num(1000000000)), Num(9),
+                            TernaryIf(Gte(t, Num(100000000)), Num(8),
+                            TernaryIf(Gte(t, Num(10000000)), Num(7),
+                            TernaryIf(Gte(t, Num(1000000)), Num(6),
+                            TernaryIf(Gte(t, Num(100000)), Num(5),
+                            TernaryIf(Gte(t, Num(10000)), Num(4),
+                            TernaryIf(Gte(t, Num(1000)), Num(3),
+                            TernaryIf(Gte(t, Num(100)), Num(2),
+                            TernaryIf(Gte(t, Num(10)), Num(1),
+                            Num(0))))))))))), Null())))
+    }
+
+    
+    def ternaryIf[A] : AST[_] => (() => AST[_]) => (() => AST[_]) => AST[_] =
+            b => t => e => Tup(TernaryIf(b, t(), e()), Null())
   }
 
   // TODO: Tagless interpreter for Twiddle AST
@@ -110,11 +132,13 @@ object CodeGen {
       case (e1, e2) => eval_term(e1); print(" + "); eval_term(e2)
     }
     case IfThenElse(cond, conseq, alt) => print("if("); eval_term(cond); print(") {"); eval_term(conseq); print("} else {"); eval_term(alt); println("}")
+    case TernaryIf(cond, conseq, alt) => print("("); eval_term(cond); print(") ? "); eval_term(conseq); print(" : "); eval_term(alt)
     case Rshift(a, b) => print("("); eval_term(a); print(" >> "); eval_term(b); print(")")
     case Ref(e) => print("*("); eval_term(e); print(")")
     case Tup(hd: Term, tl: Term) => eval_term(hd); eval_term(tl)
     case Null() => ()
     case Result(v, t) => eval_term(t)
+    case Gte(e1, e2) => eval_term(e1); print(" >= "); eval_term(e2)
     case otherwise => println(s"Unknown AST node $otherwise")
   }
 }

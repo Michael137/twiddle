@@ -38,10 +38,15 @@ object Syntax {
     def cdr(t: T[(T[Any], T[Any])]): T[(T[Any], T[Any])]
   }
 
+  trait CLike[T[_]] {
+    def ternaryIf[A] : T[Boolean] => (() => T[A]) => (() => T[A]) => T[A]
+  }
+
   trait CMathOps[T[_]] {
     def log2(a: T[Int]): T[Int]
+    def log10(a: T[Int]): T[Int]
   }
   
-  trait Exp[T[_]] extends Bools[T] with Nums[T] with Arithmetic[T] with Lambda[T] with LispLike[T]
-  trait CExp[T[_]] extends CMathOps[T] with Nums[T] with Bools[T] with Arithmetic[T] with LispLike[T] // TODO: simply extend Exp; with Arithmetic[T] with
+  trait Exp[T[_]] extends CMathOps[T] with Bools[T] with Nums[T] with Arithmetic[T] with LispLike[T] with CLike[T] with Lambda[T]
+  trait CExp[T[_]] extends CMathOps[T] with Bools[T] with Nums[T] with Arithmetic[T] with LispLike[T] with CLike[T] // TODO: simply extend Exp; with Arithmetic[T] with
 }

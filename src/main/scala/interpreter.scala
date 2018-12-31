@@ -5,8 +5,8 @@ import java.io.{PrintWriter,StringWriter,FileOutputStream}
 import scala.reflect._
 import scala.collection.BitSet
 import scala.language.higherKinds
-import scala.math.pow
 import scala.language.implicitConversions
+import scala.math._
 
 object Interpreter {
   import Syntax._
@@ -34,6 +34,9 @@ object Interpreter {
       val (_, tl: Any) = t
       (tl, null)  // ! shouldn't need to return tuple here
     }
+    def log10(a: Int): Int = log10(a)
+    def log2(a: Int): Int = log10(a)/log10(2)
+    def ternaryIf[A] : Boolean => (() => A) => (() => A) => A = b => t => e => if (b) { t () } else { e () } // TODO: DRY
   }
 
   // Pretty-printer
@@ -61,5 +64,11 @@ object Interpreter {
     def cons(a: Any, b: Any): CString[Any] = s"($a,$b)"
     def car(t: CString[(CString[Any], CString[Any])]): CString[(CString[Any], CString[Any])] = s"(car ($t))"
     def cdr(t: CString[(CString[Any], CString[Any])]): CString[(CString[Any], CString[Any])] = s"(cdr ($t))"
+    def log10(a: String): String = s"log10($a)"
+    def log2(a: String): String = s"log10($a)/log10(2)"
+    
+    def ternaryIf[A] : String => (() => String) => (() => String) => String =
+            b => t => e =>
+            "("+ b +") ? "+ t() +" : "+ e()
   }
 }

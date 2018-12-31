@@ -39,6 +39,11 @@ object Examples {
         cdr(cdr(cdr(cons(if_ret, cons(add_ret, cons(add_log_ret, add_log_twice_ret))))))
         // `(,if_ret ,add_ret ,add_log_ret)
     }
+
+    def example4[T[_]](s:CExp[T]) : T[Int] = {
+        import s._
+        add(num(5), log10(num(10)))
+    }
 }
 
 object Main {
@@ -55,6 +60,9 @@ object Main {
 
         println(example3(EmitTwiddleAST))
         eval(example3(EmitTwiddleAST))
+
+        println(example4(EmitTwiddleAST))
+        eval(example4(EmitTwiddleAST))
     }
 
     def main(args: Array[String]): Unit = {
