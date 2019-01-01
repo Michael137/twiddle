@@ -37,6 +37,9 @@ object Interpreter {
     def log10(a: Int): Int = log10(a)
     def log2(a: Int): Int = log10(a)/log10(2)
     def ternaryIf[A] : Boolean => (() => A) => (() => A) => A = b => t => e => if (b) { t () } else { e () } // TODO: DRY
+
+    def string(s: String): String = s
+    def reverse(a: String): String = a.reverse
   }
 
   // Pretty-printer
@@ -70,5 +73,8 @@ object Interpreter {
     def ternaryIf[A] : String => (() => String) => (() => String) => String =
             b => t => e =>
             "("+ b +") ? "+ t() +" : "+ e()
+
+    def string(s: String): String = s
+    def reverse(a: String): String = s""""$a".reverse"""
   }
 }

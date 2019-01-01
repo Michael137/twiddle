@@ -10,7 +10,7 @@ object Examples {
     import Syntax._
     import CodeGen._
     import Interpreter._
-    def example1[T[_]](s:Exp[T]) : Any= {
+    def example1[T[_]](s:CExp[T]) : Any= {
         import s._
         // the term is
         //    if true then 3 + 4
@@ -45,6 +45,11 @@ object Examples {
         add(num(5), log10(num(10)))
         log10(num(10))
     }
+
+    def example5[T[_]](s:CExp[T]) : T[String] = {
+        import s._
+        reverse(string("Hello, World!"))
+    }
 }
 
 object Main {
@@ -59,11 +64,20 @@ object Main {
         //println(exampleX(Staged))
         // ? println(exampleX(Optimize))
 
+        println(example3(Show))
+        // println(example3(Eval)) // TODO: non-terminating
         println(example3(EmitTwiddleAST))
         eval(example3(EmitTwiddleAST))
 
+        println(example4(Show))
+        // println(example4(Eval)) // TODO: non-terminating
         println(example4(EmitTwiddleAST))
         eval(example4(EmitTwiddleAST))
+
+        println(example5(Show))
+        println(example5(Eval))
+        println(example5(EmitTwiddleAST))
+        eval(example5(EmitTwiddleAST))
     }
 
     def main(args: Array[String]): Unit = {

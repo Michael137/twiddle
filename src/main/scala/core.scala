@@ -36,6 +36,12 @@ object Syntax {
     def cons(a: Any, b: Any): T[(T[Any], T[Any])] // ? narrow type definitions
     def car(t: T[(T[Any], T[Any])]): T[(T[Any], T[Any])]
     def cdr(t: T[(T[Any], T[Any])]): T[(T[Any], T[Any])]
+    // TODO:
+    // ! let()
+    // ! define()
+    // ! begin()
+    // ! set!()
+    // ! letrec()
   }
 
   trait CLike[T[_]] {
@@ -46,7 +52,17 @@ object Syntax {
     def log2(a: T[Int]): T[Int]
     def log10(a: T[Int]): T[Int]
   }
+
+  trait Strings[T[_]] {
+    def string(s: String): T[String]
+  }
+
+  trait CStrOps[T[_]] {
+    def reverse(a: T[String]): T[String]
+  }
+
+  trait Parallel[T[_]] {}
   
-  trait Exp[T[_]] extends CMathOps[T] with Bools[T] with Nums[T] with Arithmetic[T] with LispLike[T] with CLike[T] with Lambda[T]
-  trait CExp[T[_]] extends CMathOps[T] with Bools[T] with Nums[T] with Arithmetic[T] with LispLike[T] with CLike[T] // TODO: simply extend Exp; with Arithmetic[T] with
+  trait CExp[T[_]] extends CMathOps[T] with Bools[T] with Nums[T] with Arithmetic[T] with LispLike[T] with CLike[T] with CStrOps[T] with Strings[T]
+  trait Exp[T[_]] extends CExp[T] with Lambda[T] // TODO: simply extend Exp i.e. implement lam/app for CExp
 }
