@@ -76,5 +76,11 @@ object Interpreter {
 
     def string(s: String): String = s
     def reverse(a: String): String = s""""$a".reverse"""
+
+    // def begin(as: (() => CString[String])*) = {
+    //   var ret = "(begin "
+    //   as.map({s => ret += s", $s"})
+    //   ret + ")"
+    // }
   }
 }

@@ -7,6 +7,7 @@ import scala.collection.BitSet
 import scala.language.higherKinds
 import scala.math.pow
 import scala.language.implicitConversions
+import scala.annotation.varargs
 
 object Syntax {
   trait Nums[T[_]] {
@@ -36,16 +37,20 @@ object Syntax {
     def cons(a: Any, b: Any): T[(T[Any], T[Any])] // ? narrow type definitions
     def car(t: T[(T[Any], T[Any])]): T[(T[Any], T[Any])]
     def cdr(t: T[(T[Any], T[Any])]): T[(T[Any], T[Any])]
+
+    // def begin(as: (() => T[Int])*): T[Any]
     // TODO:
-    // ! let()
-    // ! define()
-    // ! begin()
-    // ! set!()
-    // ! letrec()
+    // ! let() => assignment
+    // ! defun() => function definition
+    // ! define() => define constants/variables
+    // ! begin() instead of collecting through cons(); cons should be arrays/lists
+    // ! set!() => assignment
+    // ! letrec() => multiple assignments
   }
 
   trait CLike[T[_]] {
     def ternaryIf[A] : T[Boolean] => (() => T[A]) => (() => T[A]) => T[A]
+    // ! arrays
   }
 
   trait CMathOps[T[_]] {
@@ -64,5 +69,5 @@ object Syntax {
   trait Parallel[T[_]] {}
   
   trait CExp[T[_]] extends CMathOps[T] with Bools[T] with Nums[T] with Arithmetic[T] with LispLike[T] with CLike[T] with CStrOps[T] with Strings[T]
-  trait Exp[T[_]] extends CExp[T] with Lambda[T] // TODO: simply extend Exp i.e. implement lam/app for CExp
+  trait Exp[T[_]] extends CExp[T] with Lambda[T] // TODO: simply extend CExp i.e. implement lam/app for CExp
 }

@@ -11,14 +11,39 @@
 \frenchspacing
 
 \begin{abstract}
-It is useful (and fun!) to bit tiwddle i.e. perform arithmetic and manipulate data at the granularity of individual bits. Traditionally there is a compromise one has to make between using a low-level unsafe language that allows bit-twiddling versus a safe high-level language in which the type system or language design prohibit operations at bit-level (without additional complexity). The \textit{Twiddle} domain-specific language (DSL) is an embedded language written in Scala using the Lightweight Modular Staging (LMS) framework that generates C code. Bit-twiddling is allowed in one of two forms:
+It is useful (and fun!) to bit twiddle i.e. perform arithmetic and manipulate data at the granularity of individual bits. Traditionally there is a compromise one has to make between using a low-level unsafe language that allows bit-twiddling versus a safe high-level language in which the type system or language design prohibit operations at bit-level (without additional complexity). The \textit{Twiddle} domain-specific language (DSL) is an embedded language written in Scala that generates bit-twiddling style C code. The language offers several modes of operation, useful for quick prototyping, debugging and custom extensions:
 \begin{enumerate*}[label=(\arabic*)]
-	\item Operations on a Bit primitive type in the Twiddle language
-	\item Using common programming patterns that efficiently transform to bit-twiddling code
+	\item Tracing interpreter
+	\item Scala evaluator
+	\item Twiddle AST generator
+	\item C code generator
 \end{enumerate*}.
 Thus our language is a tool for the curious, a tool for safe bit-hackers and a tool for someone looking to get a bit more performance out of his high-level language.
 \end{abstract}
 
+\section{Motivation}
+\section{The Language}
+\subsection{Core}
+The core of the language is split into modular pieces of functionality implemented as traits. As is common practice with tagless final interpreters (see section \ref{subsec:tagless}) we parameterize each set of language features with an evaluator that describes how each feature within its context. The core set of features is divided into following traits:
+\begin{enumerate}
+	\item Arithmatic
+	\item Strings
+	\item Bools
+	\item Lambda
+	\item LispLike
+	\item CLike
+	\item CMathOps
+	\item CStrOps
+\end{enumerate}
+\subsection{Evaluators}
+\section{Codegen}
+\subsection{Twiddle AST}
+\subsection{Twiddle AST Interpreters}
+\section{Design Choices}
+\subsection{Language Embedding}
+\subsection{Scala}
+\subsection{Tagless Final Style}\label{subsec:tagless}
+\section{Conclusion \& Future Work}
 
 \bibliographystyle{ieeetran}
 \bibliography{twiddle}

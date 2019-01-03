@@ -1,16 +1,14 @@
 package twiddle.dsl
 
-import twiddle.dsl.Interpreter._
-import twiddle.dsl.Syntax._
-import twiddle.dsl.CodeGen._
-import twiddle.dsl.Examples._
 import scala.language.higherKinds
 
+import Syntax._
+import Interpreter._
+import TwiddleAST._
+import CodeGen._
+
 object Examples {
-    import Syntax._
-    import CodeGen._
-    import Interpreter._
-    def example1[T[_]](s:CExp[T]) : Any= {
+    def example1[T[_]](s:CExp[T]) = {
         import s._
         // the term is
         //    if true then 3 + 4
@@ -20,14 +18,14 @@ object Examples {
             (() => num(5.5)))
     }
 
-    def example2[T[_]](s:Exp[T]) : T[(Int => Int) => (Int => Int)] = {
+    def example2[T[_]](s:Exp[T]) = {
         import s._
         lam[Int => Int,Int => Int] (f =>
             lam[Int,Int] (x => 
                 app (f) (app(f)(x))))
     }
 
-    def example3[T[_]](s:CExp[T]) : T[(T[Any], T[Any])] = {
+    def example3[T[_]](s:CExp[T]) = {
         import s._
         // ! todo should generate code for both statements
         val if_ret = (ifThenElse_(bool(true))
@@ -40,16 +38,28 @@ object Examples {
         // `(,if_ret ,add_ret ,add_log_ret)
     }
 
-    def example4[T[_]](s:CExp[T]) : T[Int] = {
+    def example4[T[_]](s:CExp[T]) = {
         import s._
         add(num(5), log10(num(10)))
         log10(num(10))
     }
 
-    def example5[T[_]](s:CExp[T]) : T[String] = {
+    def example5[T[_]](s:CExp[T]) = {
         import s._
         reverse(string("Hello, World!"))
     }
+
+    // def example6[T[_]](s:CExp[T]) = {
+    //     import s._
+    //     val v1 = (() => log10(num(1)))
+    //     val v2 = (() => log10(num(2)))
+    //     val v3 = (() => log10(num(3)))
+    //     begin(v1, v2, v3)
+    // }
+
+    // def example7[T[_], M[_]](s1:CExp[T], s2:EmitC[M]) = {
+    //     import s._
+    // }
 }
 
 object Main {
