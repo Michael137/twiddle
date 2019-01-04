@@ -6,3 +6,6 @@ target/
 *.aux
 *.log
 *.bak
+twiddleOutFile
+twiddle.bbl
+twiddle.blg

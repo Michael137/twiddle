@@ -1,0 +1,72 @@
+package twiddle.dsl
+
+import scala.lms.common._
+import java.io.{PrintWriter,StringWriter,FileOutputStream}
+import scala.reflect._
+import scala.collection.BitSet
+import scala.language.higherKinds
+import scala.math.pow
+import scala.language.implicitConversions
+import scala.annotation.varargs
+
+object IR {
+    trait Nums[T[_]] {
+        def num[A](v: A): T[A]
+    }
+
+    trait Arithmetic[T[_]] {
+        def add[A: Numeric](a: T[A], b: T[A]): T[A]
+    }
+
+    /*type AST[A] = Term
+    abstract class Term
+    case class IntPtr() extends Term
+    case class Const(e: Term) extends Term
+    case class Addr(e: Term) extends Term
+    case class Var(s: String) extends Term
+    case class Num[A](n: A) extends Term
+    case class Bool(b: Boolean) extends Term
+    case class CStr(s: String) extends Term // C-style string
+    case class Gte(e1: Term, e2: Term) extends Term
+    case class Gt(e1: Term, e2: Term) extends Term
+    case class PreInc(e1: Term) extends Term
+    case class Assign(v: Term, e: Term) extends Term
+    case class Decl(v: Term) extends Term
+    case class I(v: Var) extends Term // Integer
+    case class F(v: Var) extends Term // Float
+    case class D(v: Var) extends Term // Double
+    case class S(v: Var) extends Term // String
+    case class Rshift(v: Term, n: Term) extends Term // >>
+    case class Minus(v: Term, n: Term) extends Term // -
+    case class Plus(v: Term, n: Term) extends Term // +
+    case class Times(v: Term, n: Term) extends Term // *
+    case class Divide(v: Term, n: Term) extends Term // /
+    case class Mod(v: Term, n: Term) extends Term // /
+    case class XOR(n1: Term, n2: Term) extends Term // ^
+    case class Cast(c: Term, e: Term) extends Term
+    case class IfThenElse(cond: Term, conseq: Term, alt: Term) extends Term
+    case class TernaryIf(cond: Term, conseq: Term, alt: Term) extends Term // TODO: DRY
+    case class Ref(e: Term) extends Term // pointer dereference
+    case class Null() extends Term // null type
+    case class Length(s: CStr) extends Term // null type
+    case class For(init: Term, cond: Term, variant: Term, body: Term) extends Term // null type
+
+    case class Tup(e1: Any, e2: Any) extends Term // tuple // ! should be Tup(e1: Term, e2: Term)
+
+    case class Result(v: Var, e: Term) extends Term*/
+
+    trait IROpsExp[T[_]] extends Arithmetic[T] with Nums[T] // with Variables[T] with Bools[T] with Strings[T] with ControlFlow[T]
+    trait IROpsExpOpt[T[_]] extends IROpsExp[T] {}
+
+    type IRRep[A] = (Any, () => Unit)
+    implicit object EmitC extends IROpsExp[IRRep] {
+        def num[A](v: A) = (v, () => print(v))
+        def add[A: Numeric](a: IRRep[A], b: IRRep[A]): IRRep[A] = {
+            val (a1, ta) = a
+            val (b1, tb) = b
+            (null, () => {ta(); print(" + "); tb()})
+        }
+    }
+
+    // implicit object EmitCOpt extends IROpsExpOpt[IRRep] {}
+}
