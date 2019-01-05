@@ -35,6 +35,7 @@ object CodeGen {
     case CStr(s) => print(s""""$s"""")
     case Bool(b) => if(b) print(1) else print(0)
     case Var(s) => print(s)
+    case H(s) => print(s)
     case Decl(e) => e match {
       case F(v) => print("float "); eval_term(v); println(";")
       case U(v) => print("unsigned int "); eval_term(v); println(";")
@@ -58,7 +59,8 @@ object CodeGen {
     }
     case IfThenElse(cond, conseq, alt) => print("if("); eval_term(cond); print(") {"); eval_term(conseq); print("} else {"); eval_term(alt); println("}")
     case TernaryIf(cond, conseq, alt) => print("("); eval_term(cond); print(") ? "); eval_term(conseq); print(" : "); eval_term(alt)
-    case Rshift(a, b) => print("("); eval_term(a); print(" >> "); eval_term(b); print(")")
+    case RShift(a, b) => print("("); eval_term(a); print(" >> "); eval_term(b); print(")")
+    case LShift(a, b) => print("("); eval_term(a); print(" << "); eval_term(b); print(")")
     case Ref(e) => print("*("); eval_term(e); print(")")
     case Tup(hd: Term, tl: Term) => eval_term(hd); println(";"); eval_term(tl)
     case Null() => ()
@@ -76,7 +78,8 @@ object CodeGen {
     case RShiftEq(a, b) => eval_term(a); print(" >>= "); eval_term(b)
     case LShiftEq(a, b) => eval_term(a); print(" <<= "); eval_term(b)
     case BitOrEq(n1, n2) => eval_term(n1); print(" |= "); eval_term(n2)
-    case BitAnd(n1, n2) => eval_term(n1); print(" & "); eval_term(n2)
+    case BitAnd(n1, n2) => print("("); eval_term(n1); print(" & "); eval_term(n2); print(")")
+    case BitOr(n1, n2) => eval_term(n1); print(" | "); eval_term(n2)
 
     case Printf(f, es) =>
       val varnames = es.map({ t: Term => t match {

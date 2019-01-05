@@ -27,7 +27,6 @@ object Examples {
 
     def example3[T[_]](s:Exp[T]) = {
         import s._
-        // ! todo should generate code for both statements
         val if_ret = (ifThenElse_(bool(true))
                         (() => log2(num(3)))
                         (() => add(num(2), num(5))))
@@ -67,7 +66,7 @@ object Examples {
     def example8[T[_]](s:Exp[T]) = {
         import s._
         // bits(426)
-        prints(""""%d"""", List(reverseBits(bits(100))))
+        prints(""""%d %d"""", List(reverseBits(bits(50)), reverseBits(bits(50))))
     }
 }
 

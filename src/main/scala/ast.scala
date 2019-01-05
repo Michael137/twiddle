@@ -16,11 +16,14 @@ object TwiddleAST {
     case class Assign(v: Term, e: Term) extends Term
     case class Decl(v: Term) extends Term
     case class I(v: Var) extends Term // Integer
+    case class H(s: String) extends Term // Hex number
+    case class B(s: String) extends Term // Bit number
     case class F(v: Var) extends Term // Float
     case class D(v: Var) extends Term // Double
     case class S(v: Var) extends Term // String
     case class U(v: Var) extends Term // Unsigned Integer (also used to represent bits)
-    case class Rshift(v: Term, n: Term) extends Term // >>
+    case class RShift(v: Term, n: Term) extends Term // >>
+    case class LShift(v: Term, n: Term) extends Term // <<
     case class Minus(v: Term, n: Term) extends Term // -
     case class Plus(v: Term, n: Term) extends Term // +
     case class Times(v: Term, n: Term) extends Term // *
@@ -40,6 +43,7 @@ object TwiddleAST {
     case class RShiftEq(a: Term, b: Term) extends Term
     case class LShiftEq(a: Term, b: Term) extends Term
     case class BitOrEq(a: Term, b: Term) extends Term
+    case class BitOr(a: Term, b: Term) extends Term
     case class BitAnd(a: Term, b: Term) extends Term
     case class PostDec(a: Term) extends Term
     case class Func(ret: String, name: String, params: List[String], body: Term => Term) extends Term
@@ -66,17 +70,20 @@ object TwiddleAST {
         def reverseBitsParallel(b: Term): Term = {
             val Tup(t: Term, Null()) = b
             val v = gensym("v")
-            // Result(Var(v),
-            //         Tup(Decl(U(Var(v))),
-            //         Tup(Assign(Var(v), t),
-            //         Tup(Assign(Var(v), )
-            Null() // TODO: 
-                   /* unsigned int v; // 32-bit word to reverse bit order
-                    v = ((v >> 1) & 0x55555555) | ((v & 0x55555555) << 1);
-                    v = ((v >> 2) & 0x33333333) | ((v & 0x33333333) << 2);
-                    v = ((v >> 4) & 0x0F0F0F0F) | ((v & 0x0F0F0F0F) << 4);
-                    v = ((v >> 8) & 0x00FF00FF) | ((v & 0x00FF00FF) << 8);
-                    v = ( v >> 16             ) | ( v               << 16); */
+            Result(Var(v),
+                    Tup(Decl(U(Var(v))),
+                    Tup(Assign(Var(v), t),
+                    Tup(Assign(Var(v), BitOr(BitAnd(RShift(Var(v), Num(1)), H("0x55555555")),
+                                             LShift(BitAnd(Var(v), H("0x55555555")), Num(1)))),
+                    Tup(Assign(Var(v), BitOr(BitAnd(RShift(Var(v), Num(2)), H("0x33333333")),
+                                             LShift(BitAnd(Var(v), H("0x33333333")), Num(2)))),
+                    Tup(Assign(Var(v), BitOr(BitAnd(RShift(Var(v), Num(4)), H("0x0F0F0F0F")),
+                                             LShift(BitAnd(Var(v), H("0x0F0F0F0F")), Num(4)))),
+                    Tup(Assign(Var(v), BitOr(BitAnd(RShift(Var(v), Num(8)), H("0x00FF00FF")),
+                                             LShift(BitAnd(Var(v), H("0x00FF00FF")), Num(8)))),
+                    Tup(Assign(Var(v), BitOr(RShift(Var(v), Num(16)),
+                                             LShift(Var(v),Num(16)))),
+                    Null()))))))))
         }
         def reverseBits(b: Term): Term = {
             val Tup(t: Term, Null()) = b
@@ -148,7 +155,7 @@ object TwiddleAST {
             Tup(Decl(I(Var(x1))),
             Tup(Assign(Var(x0), t),
             Tup(Assign(Var(x1), Ref(Cast(Const(IntPtr()), Addr(Var(x0))))),
-            Tup(Assign(Var(x1), Minus(Rshift(Var(x1), Num(23)), Num(127))), Null()))))))
+            Tup(Assign(Var(x1), Minus(RShift(Var(x1), Num(23)), Num(127))), Null()))))))
         }
 
         def log10(a: AST[Int]): AST[Int] = {
