@@ -45,6 +45,7 @@ Thus our language is a tool for the curious, a tool for safe bit-hackers and a t
 
 \section{Motivation}
 No need to worry about syntax such as semicolons, operator precedence, asterisk locations or qualifier usages.
+Bithacks in \cite{anderson2005bit} have been verified
 \section{The Language \& Architecture}
 \begin{figure}[t]
 	\centering
@@ -52,17 +53,20 @@ No need to worry about syntax such as semicolons, operator precedence, asterisk 
 	\caption{Architecture of the Twiddle framework}\label{twiddle_arch}
 \end{figure}
 \subsection{Core}
-The core of the language is split into modular pieces of functionality implemented as traits. As is common practice with tagless final interpreters (see section \ref{subsec:tagless}) we parameterize each set of language features with an evaluator that describes how each feature within its context. The core set of features is divided into following traits:
-\begin{enumerate}
-	\item Arithmatic
-	\item Strings
-	\item Bools
-	\item Lambda
-	\item LispLike
-	\item CLike
-	\item CMathOps
-	\item CStrOps
-\end{enumerate}
+The core of the language is split into modular pieces of functionality implemented as traits. As is common practice with tagless final interpreters (see section \ref{subsec:tagless}) we parameterize each set of language features with an evaluator that describes how each feature within its context. Below we briefly describe some of the core feature set which are implemented as traits in \textbf{core.scala}:
+\begin{itemize}
+	\item \textbf{Nums}: Defines abstract interpretation of numeric Scala types including \texttt{Int, Double, Float}. It is generic over the type of input number supplied. Operations involving numeric types in the core language thus have to also be generic over numeric types. This is fine for integral numbers but gets problematic for fractional operations such as division.
+	\item \textbf{Arithmetic}: Basic mathematical operations that operate on the interpretation of core's \texttt{num}. Some operations are generic over the input type while others are explicitly for fractional versus integral types.
+	\item \textbf{Bools}: Includes both the interpretation of Scala's \texttt{Boolean} type and also of constructs operating on said booleans such as if-statements, ternary operators and logical operators.
+	\item \textbf{Lambda}: Interpretation of lambda definition and application. Scala's lambda maps cleanly to the concept of a lambda in the lisp-like user-level language. However, a mapping to C is less straightforward and described in section \ref{subsec:ast_interpreter}
+	\item \textbf{LispLike}: Contains a limited set of Lisp primitives to be able to create lists using \texttt{cons/car/cdr}. A \texttt{begin} primitive was added mainly as a way to collect the AST nodes created in a code snippet when interpreting using \texttt{EmitTwiddleAST} since without it Scala would simply return the last generated statement. Essentially it is a wrapper around a Scala \texttt{List}.
+\end{itemize}
+
+The traits prefixed with a ``C'' such as the following ones listed are the operations taken from Anderson's set of bithacks\cite{anderson2005bit}.
+\begin{itemize}
+	\item \textbf{CMathOps}: Mathematical operations that when passed to the codegeneration backend produce bit-twiddled implementations. Typically in other languages these would correspond to standard library functions such as \textbf{scala.math.log10} for \texttt{log10}.
+	\item \textbf{Bits}: Includes definitions of the \texttt{bits} term, which is simply the interpretation of a numeric type, and functions whose goal is to operate on the structure of bit patterns of an integer such as reversing bit sequences.
+\end{itemize}
 
 \subsection{Evaluators}
 Each term in the language is a function whose parameters and return type are wrapped in the abstract type of the interpreter that is evaluating the function. The second column of figure \ref{twiddle_arch} shows the current set of supported interpreters.
@@ -89,7 +93,7 @@ So far we have only discussed mathematical or string operations that utilize ari
 As implied above, not all IR terms are features in the core language, thus terms such as \texttt{Ref(e: Term)} or \texttt{Assign(v: Term, e: Term)} are helper terms used to ease the transition from user-level language to C.
 Variable declarations and assignment
 
-\subsection{Twiddle AST Interpreters}
+\subsection{Twiddle AST Interpreters}\label{subsec:ast_interpreter}
 A consequence of the Tagless style of the core language is that in order to achieve a generic expression type that is used across all interpreters and be able to interpret the same piece of code in multiple ways, we need to implement language features across several interpreters that are semantically sound. For the \texttt{EmitTwiddleAST} interpreter this poses a challenge since some of the functional higher-level constructs do not map cleanly onto C-style programs. A prime example is the lambda/apply pair. A way to map lambdas to C is to convert the lambda into a function definition, storing the function body together with a unique function name in the internal interpreter state, return the function name to the user and on applications of the function name generate a C function call. For this purpose we implemented term \texttt{Func( FILL )} and \texttt{App( FILL )}. However, retrieving the function body requires intrusive changes around several components of the framework and is left as an open exercise for future versions. Currently a \texttt{lam} returns a closure to the user which he is responsible for applying i.e. passing to \texttt{app} which then evaluates the lambda.
 
 \subsubsection{Auxiliary Machinery}

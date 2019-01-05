@@ -25,6 +25,9 @@ object Syntax {
   trait Bools[T[_]] {
     def bool(b: Boolean): T[Boolean]
     def ifThenElse_[A] : T[Boolean] => (() => T[A]) => (() => T[A]) => T[A]
+    def ternaryIf[A] : T[Boolean] => (() => T[A]) => (() => T[A]) => T[A]
+    def and(a: T[Boolean], b: T[Boolean]): T[Boolean]
+    def or(a: T[Boolean], b: T[Boolean]): T[Boolean]
   }
 
   trait Lambda[T[_]] {
@@ -38,19 +41,6 @@ object Syntax {
     def car(t: T[(T[Any], T[Any])]): T[(T[Any], T[Any])]
     def cdr(t: T[(T[Any], T[Any])]): T[(T[Any], T[Any])]
     def begin[A](as: List[T[A]]): T[A]
-
-    // ! define() => define constants/variables
-
-    // TODO:
-    // ! let() => assignment
-    // ! begin() instead of collecting through cons(); cons should be arrays/lists
-    // ! set!() => assignment
-    // ! letrec() => multiple assignments
-  }
-
-  trait CLike[T[_]] {
-    def ternaryIf[A] : T[Boolean] => (() => T[A]) => (() => T[A]) => T[A]
-    // ! arrays
   }
 
   trait CMathOps[T[_]] {
@@ -79,6 +69,6 @@ object Syntax {
   trait Parallel[T[_]] {}
   
   trait Exp[T[_]] extends CMathOps[T] with Bools[T] with Nums[T] with Arithmetic[T] with LispLike[T]
-                                      with CLike[T] with CStrOps[T] with Strings[T] with IOOps[T] with Lambda[T]
+                                      with CStrOps[T] with Strings[T] with IOOps[T] with Lambda[T]
                                       with Bits[T]
 }

@@ -45,6 +45,8 @@ object TwiddleAST {
     case class BitOrEq(a: Term, b: Term) extends Term
     case class BitOr(a: Term, b: Term) extends Term
     case class BitAnd(a: Term, b: Term) extends Term
+    case class Or(a: Term, b: Term) extends Term
+    case class And(a: Term, b: Term) extends Term
     case class PostDec(a: Term) extends Term
     case class Func(ret: String, name: String, params: List[String], body: Term => Term) extends Term
     case class App(f: Term, arg: Term) extends Term // f can be Var or Func
@@ -202,5 +204,8 @@ object TwiddleAST {
         def prints[A](format: String, es: List[AST[A]]) = {
             Tup(Printf(format, es), Null())
         }
+
+        def and(a: AST[Boolean], b: AST[Boolean]): AST[Boolean] = And(a, b)
+        def or(a: AST[Boolean], b: AST[Boolean]): AST[Boolean] = Or(a, b)
     }
 }

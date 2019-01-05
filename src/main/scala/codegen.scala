@@ -20,7 +20,7 @@ object CodeGen {
   // Multi-stage evaluator
   def eval(ast: AST[_]): Unit = {
     ast match {
-      case Tup(hd: Term, Tup(tl1, tl2)) => eval_term(hd); eval(Tup(tl1, tl2))
+      case Tup(hd: Term, Tup(tl1, tl2)) => eval_term(hd); println(";"); eval(Tup(tl1, tl2))
       case Tup(hd: Term, Null()) => eval_term(hd)
       case Result(v, t) => eval(t)
       case _ => ()
@@ -43,7 +43,7 @@ object CodeGen {
       case D(v) => print("double "); eval_term(v); println(";")
       case S(v) => print("char* "); eval_term(v); println(";")
     }
-    case Assign(v, e) => eval_term(v); print(" = "); eval_term(e); println(";")
+    case Assign(v, e) => eval_term(v); print(" = "); eval_term(e)
     case Cast(c, v) => print("("); eval_term(c); print(")"); eval_term(v)
     case Const(e) => print("const "); eval_term(e)
     case IntPtr() => print("int* ")
@@ -79,7 +79,9 @@ object CodeGen {
     case LShiftEq(a, b) => eval_term(a); print(" <<= "); eval_term(b)
     case BitOrEq(n1, n2) => eval_term(n1); print(" |= "); eval_term(n2)
     case BitAnd(n1, n2) => print("("); eval_term(n1); print(" & "); eval_term(n2); print(")")
-    case BitOr(n1, n2) => eval_term(n1); print(" | "); eval_term(n2)
+    case BitOr(n1, n2) => print("("); eval_term(n1); print(" | "); eval_term(n2); print(")")
+    case And(a, b) => print("("); eval_term(a); print(" && "); eval_term(b); print(")")
+    case Or(a, b) => print("("); eval_term(a); print(" || "); eval_term(b); print(")")
 
     case Printf(f, es) =>
       val varnames = es.map({ t: Term => t match {

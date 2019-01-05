@@ -33,34 +33,24 @@ object Interpreter {
     def ifThenElse_[A] : Boolean => (() => A) => (() => A) => A = b => t => e => if (b) { t () } else { e () }
     def lam[A: ClassTag, B: ClassTag](f : A => B) = f
     def app[A, B] = (f : A => B) => (p : A) => f(p)
-    // def cons : Id[Any] => Id[Any] => Id[Tuple2[Id[Any], Id[Any]]] = a => b => (a, b)
     def cons(a: Any, b: Any) = (a, b)
     def car(t: Id[(Id[Any], Id[Any])]): Id[(Id[Any], Id[Any])] = {
       val (hd, _) = t
-      (hd, null) // ! shouldn't need to return tuple here
+      (hd, null)
     }
     def cdr(t: Id[(Id[Any], Id[Any])]): Id[(Id[Any], Id[Any])] = {
       val (_, tl) = t
-      (tl, null) // ! shouldn't need to return tuple here
+      (tl, null)
     }
     def log10(a: Double): Double = (scala.math.log10(a))
     def log2(a: Double): Double = (scala.math.log10(a)/scala.math.log10(2))
-    def ternaryIf[A] : Boolean => (() => A) => (() => A) => A = b => t => e => if (b) { t () } else { e () } // TODO: DRY
-
+    def ternaryIf[A] : Boolean => (() => A) => (() => A) => A = b => t => e => if (b) { t () } else { e () }
     def string(s: String): String = s
     def reverse(a: String): String = a.reverse
-
-    def begin[A](as: List[A]): A = {
-      as.last
-    }
-
-    def prints[A](format: String, es: List[A]): Unit = {
-      print(es)
-    }
-
-    def printDouble(vs: List[Double]): Unit = {
-      println(vs)
-    }
+    def begin[A](as: List[A]): A = as.last
+    def prints[A](format: String, es: List[A]): Unit = print(es)
+    def and(a: Boolean, b: Boolean): Boolean = a && b
+    def or(a: Boolean, b: Boolean): Boolean = a || b
   }
 
   // Pretty-printer
@@ -123,5 +113,7 @@ object Interpreter {
       es.map({s => ret += s", $s"})
       ret + ")"
     }
+    def and(a: String, b: String): String = s"$a && $b"
+    def or(a: String, b: String): String = s"$a || $b"
   }
 }
