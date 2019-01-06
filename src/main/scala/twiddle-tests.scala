@@ -138,6 +138,7 @@ object Main {
         gensrc(hasZeroTest(EmitTwiddleAST))
         gensrc(swapBitsTest(EmitTwiddleAST))
         gensrc(swapBitsTest2(EmitTwiddleAST))
+        gensrc(beginTest(EmitTwiddleAST).asInstanceOf[Term])
     }
 
     def main(args: Array[String]): Unit = {
