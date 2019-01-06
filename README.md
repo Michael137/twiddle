@@ -23,8 +23,8 @@ Example:
 ```
 x = 20
 y = 10
-if( has_zero(x) )
-    swap_bits(y, log10(x))
+if( hasZero(x) )
+    swapBits(y, log10(x))
 ```
 should produce
 ```
@@ -52,8 +52,10 @@ if( haszero(x) )
   - Yes. Perhaps different evaluator for aggressive optimizations
 - [x] Choose codegen backend. E.g. LMS? lms-verify?
   - No more LMS. Documentation is virtually non-existent. C backend is not consistent with the C language. Maybe in the long term with a few pull requests to LMS.
-- [ ] Provide option to verify code? E.g. lms-verify
-- [ ] Parallelize C code where bit-hacks were not possible. E.g. OMP, Vectorization or provide pluggable parallelizers
+- [x] Provide option to verify code? E.g. lms-verify
+  - Not yet. Perhaps when supporting LMS style codegen
+- [x] Parallelize C code where bit-hacks were not possible. E.g. OMP, Vectorization or provide pluggable parallelizers
+  - Yes
 
 ## Why no LMS?
 - Documentation for this use-case is hard to come by
@@ -64,10 +66,10 @@ if( haszero(x) )
 - [x] Implement tagless interpreter for core object language ([see language overview](#dsl-overview))
 - [x] Add code generation facilities to core language
 - [ ] Add optimization facilities
-- [ ] Build out core library
-- [ ] OpenMP codegen for LMS?
-- [ ] Add verifier and extend
-- [ ] ScalaTest support
+- [x] Build out core library
+- [ ] OpenMP codegen ~~for LMS~~?
+- [x] ~~Add verifier and extend~~
+- [x] ~~ScalaTest support~~ Testsuite
 - [ ] Extend with LMS
 
 # Instructions
