@@ -23,8 +23,8 @@ Example:
 ```
 x = 20
 y = 10
-if( has_zero(x) )
-    swap_bits(y, log10(x))
+if( hasZero(x) )
+    swapBits(y, log10(x))
 ```
 should produce
 ```
