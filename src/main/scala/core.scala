@@ -1,6 +1,5 @@
 package twiddle.dsl
 
-import scala.lms.common._
 import java.io.{PrintWriter,StringWriter,FileOutputStream}
 import scala.reflect._
 import collection.immutable._ // For BitSet
@@ -24,7 +23,8 @@ object Syntax {
 
   trait Bools[T[_]] {
     def bool(b: Boolean): T[Boolean]
-    def ifThenElse_[A] : T[Boolean] => (() => T[A]) => (() => T[A]) => T[A]
+    def ifThenElse[A](b: T[Boolean])(t: (() => T[A]))(e: (() => T[A]))(implicit tag: ClassTag[A]): T[A]
+    def ifThen[A](b: T[Boolean])(t: (() => T[A]))(implicit tag: ClassTag[A]): T[Unit]
     def ternaryIf[A] : T[Boolean] => (() => T[A]) => (() => T[A]) => T[A]
     def and(a: T[Boolean], b: T[Boolean]): T[Boolean]
     def or(a: T[Boolean], b: T[Boolean]): T[Boolean]
@@ -36,11 +36,10 @@ object Syntax {
   }
 
   trait LispLike[T[_]] {
-    // def cons : T[Any] => T[Any] => T[Tuple2[T[Any], T[Any]]]
     def cons(a: Any, b: Any): T[(T[Any], T[Any])] // ? narrow type definitions
-    def car(t: T[(T[Any], T[Any])]): T[(T[Any], T[Any])]
-    def cdr(t: T[(T[Any], T[Any])]): T[(T[Any], T[Any])]
     def begin[A](as: List[T[A]]): T[A]
+    def car(t: Any): Any
+    def cdr(t: Any): Any
   }
 
   trait CMathOps[T[_]] {
@@ -61,12 +60,17 @@ object Syntax {
   }
 
   trait Bits[T[_]] {
-    def bits(a: Int): T[BitSet]
+    implicit def d2i(x: T[Double]): T[Int]
+    def bits(a: T[Int]): T[BitSet]
     def reverseBits(b: T[BitSet]): T[BitSet]
     def reverseBitsParallel(b: T[BitSet]): T[BitSet]
+    def hasZero(b: T[BitSet]): T[Boolean]
+    def swapBits(a: T[BitSet], b: T[BitSet]): T[(BitSet, BitSet)]
   }
 
   trait Parallel[T[_]] {}
+
+  trait Test[T[_]] {}
   
   trait Exp[T[_]] extends CMathOps[T] with Bools[T] with Nums[T] with Arithmetic[T] with LispLike[T]
                                       with CStrOps[T] with Strings[T] with IOOps[T] with Lambda[T]

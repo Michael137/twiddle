@@ -1,6 +1,5 @@
 package twiddle.dsl
 
-import scala.lms.common._
 import java.io.{PrintWriter,StringWriter,FileOutputStream}
 import scala.reflect._
 import scala.collection.BitSet
@@ -17,7 +16,6 @@ object CodeGen {
   // ? use LMS (eval.scala in LMS tutorial; Ops[T[_]])
   // either eval/pretty print code or generete C code
 
-  // Multi-stage evaluator
   def eval(ast: AST[_]): Unit = {
     ast match {
       case Tup(hd: Term, Tup(tl1, tl2)) => eval_term(hd); println(";"); eval(Tup(tl1, tl2))
@@ -28,6 +26,7 @@ object CodeGen {
   }
   
   import scala.collection.mutable.HashMap
+  var defines = HashMap[String, String]()
   var lambdaDefs = HashMap[String, Func]()
   var tmpNameCtr = 0
   def eval_term(t: Term): Unit = t match {
@@ -43,7 +42,10 @@ object CodeGen {
       case D(v) => print("double "); eval_term(v); println(";")
       case S(v) => print("char* "); eval_term(v); println(";")
     }
-    case Assign(v, e) => eval_term(v); print(" = "); eval_term(e)
+    case Assign(v, e) => e match {
+      case Result(Var(vr), exp) => eval_term(exp); eval_term(v); print(" = "); println(vr); println(";")
+      case _ => eval_term(v); print(" = "); eval_term(e); println(";")
+    }
     case Cast(c, v) => print("("); eval_term(c); print(")"); eval_term(v)
     case Const(e) => print("const "); eval_term(e)
     case IntPtr() => print("int* ")
@@ -57,12 +59,15 @@ object CodeGen {
       case (exp, Result(v, t)) => eval_term(t); eval_term(exp); print(" + "); eval_term(v)
       case (e1, e2) => eval_term(e1); print(" + "); eval_term(e2)
     }
-    case IfThenElse(cond, conseq, alt) => print("if("); eval_term(cond); print(") {"); eval_term(conseq); print("} else {"); eval_term(alt); println("}")
+    case IfThenElse(cond, conseq, alt) =>
+      print("if("); eval_term(cond); print(") {\n"); eval_term(conseq); print(";\n} else {\n"); eval_term(alt); println(";\n}")
+    case IfThen(cond, conseq) =>
+      print("if("); eval_term(cond); print(") {\n"); eval_term(conseq); println(";\n}")
     case TernaryIf(cond, conseq, alt) => print("("); eval_term(cond); print(") ? "); eval_term(conseq); print(" : "); eval_term(alt)
     case RShift(a, b) => print("("); eval_term(a); print(" >> "); eval_term(b); print(")")
     case LShift(a, b) => print("("); eval_term(a); print(" << "); eval_term(b); print(")")
     case Ref(e) => print("*("); eval_term(e); print(")")
-    case Tup(hd: Term, tl: Term) => eval_term(hd); println(";"); eval_term(tl)
+    case Tup(hd: Term, tl: Term) => eval_term(hd); eval_term(tl)
     case Null() => ()
     case Gte(e1, e2) => eval_term(e1); print(" >= "); eval_term(e2)
     case Gt(e1, e2) => eval_term(e1); print(" > "); eval_term(e2)
@@ -82,7 +87,19 @@ object CodeGen {
     case BitOr(n1, n2) => print("("); eval_term(n1); print(" | "); eval_term(n2); print(")")
     case And(a, b) => print("("); eval_term(a); print(" && "); eval_term(b); print(")")
     case Or(a, b) => print("("); eval_term(a); print(" || "); eval_term(b); print(")")
-
+    case Define(vr, args, vl) =>
+      var defStr = s"#define $vr"
+      if(args.size != 0) {
+        defStr += "("
+        defStr += args.mkString(",")
+        defStr += ")"
+      }
+      defStr += s" "
+      defStr += vl
+      defines += (vr -> defStr)
+    case Call(name, args: List[Var]) =>
+      val vals = args.map({ v: Var => v.s })
+      print(s"""$name(${vals.mkString(",")})""")
     case Printf(f, es) =>
       val varnames = es.map({ t: Term => t match {
           case Result(vr, exp) => eval_term(exp);vr.s
@@ -109,12 +126,16 @@ object CodeGen {
     incls.foreach({ s => println(s"#include <$s>")})
   }
 
+  def emitDefines() = {
+    defines.foreach( x => println(x._2))
+  }
+
   def emitMainBegin() = {
     println("int main() {")
   }
 
   def emitMainEnd() = {
-    println("\n; return 0;\n}") // TODO: shouldn't need ';' before "return"
+    println("\n; return 0;\n}")
   }
 
   def gensrc(ast: AST[_]): Either[String, Unit] = {
@@ -131,13 +152,17 @@ object CodeGen {
 
     println(s"// GENERATING to file: $filename")
     val out_file = new FileOutputStream(new File(filename))
+    val evaled_prog = new ByteArrayOutputStream()
     scala.Console.withOut(out_file) {
       try{
+        scala.Console.withOut(evaled_prog) { eval(program) } // To collect defines and definitions
+
         emitGenHeader()
         emitIncludes()
+        emitDefines()
         // emitFunDefs() // Function definitions
         emitMainBegin()
-        eval(program)
+        println(evaled_prog)
         emitMainEnd()
         emitGenFooter()
         Left(filename)

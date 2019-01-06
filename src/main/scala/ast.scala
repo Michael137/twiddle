@@ -1,5 +1,9 @@
 package twiddle.dsl
 
+import scala.reflect._
+import scala.reflect.runtime.universe._
+import scala.language.implicitConversions
+
 object TwiddleAST {
     type AST[A] = Term
     abstract class Term
@@ -32,6 +36,7 @@ object TwiddleAST {
     case class XOR(n1: Term, n2: Term) extends Term // ^
     case class Cast(c: Term, e: Term) extends Term
     case class IfThenElse(cond: Term, conseq: Term, alt: Term) extends Term
+    case class IfThen(cond: Term, conseq: Term) extends Term
     case class TernaryIf(cond: Term, conseq: Term, alt: Term) extends Term // TODO: DRY
     case class Ref(e: Term) extends Term // pointer dereference
     case class Null() extends Term // null type
@@ -50,6 +55,8 @@ object TwiddleAST {
     case class PostDec(a: Term) extends Term
     case class Func(ret: String, name: String, params: List[String], body: Term => Term) extends Term
     case class App(f: Term, arg: Term) extends Term // f can be Var or Func
+    case class Define(vr: String, args: List[String], vl: String) extends Term // TODO: Could be improved by taking Term instead of simple String
+    case class Call(f: String, arg: List[Var]) extends Term // TODO: f should be Var
 
     case class Tup(e1: Any, e2: Any) extends Term // tuple // ! should be Tup(e1: Term, e2: Term)
 
@@ -60,15 +67,17 @@ object TwiddleAST {
     import Syntax._
 
     implicit object EmitTwiddleAST extends Exp[AST] {
-        var stFresh = 0
-        def fresh() = { stFresh += 1; stFresh }
+        var varCtr = 0
+        def fresh() = { varCtr += 1; varCtr }
         def gensym(varName: String) = { s"$varName${fresh()}" }
+        def reset() = { varCtr = 0 }
 
         // We represent bits as unsigned integers in the generated C.
         // At this level (in Scala) its just another integer.
         // Bit operations in the twiddle IR are responsible
         // for declaring 'Num's as 'U's
-        def bits(a: Int): Term = num(a)
+        implicit def d2i(x: Term): Term = x
+        def bits(a: AST[Int]): Term = a
         def reverseBitsParallel(b: Term): Term = {
             val Tup(t: Term, Null()) = b
             val v = gensym("v")
@@ -104,7 +113,39 @@ object TwiddleAST {
                             Tup(LShiftEq(Var(r), Num(1)),
                             Tup(BitOrEq(Var(r), BitAnd(Var(v), Num(1))),
                             Tup(PostDec(Var(s)), Null())))),
-                    Tup(LShiftEq(Var(r), Var(s)), Null())))))))))                
+                    Tup(LShiftEq(Var(r), Var(s)), Null())))))))))
+        }
+
+        def hasZero(b: Term): Term = {
+            val Tup(t: Term, Null()) = b
+            val v = gensym("v")
+            val r = gensym("r")
+
+            Result(Var(r),
+                Tup(Decl(U(Var(r))),
+                Tup(Decl(U(Var(v))),
+                Tup(Assign(Var(v), t),
+                Tup(Define("HAS_ZERO", List("v"), "(((v) - 0x01010101UL) & ~(v) & 0x80808080UL)"),
+                Tup(Assign(Var(r), Call("HAS_ZERO", List(Var(v)))), Null()))))))
+        }
+
+        def swapBits(a: Term, b: Term): Term = {
+            val (t1, t2) = (a, b) match {
+                case (Tup(t1: Term, Null()), Tup(t2: Term, Null())) => (t1, t2)
+                case (Tup(t1: Term, Null()), r: Result) => (t1, r)
+            }
+            val v1 = gensym("v")
+            val v2 = gensym("v")
+            val r = gensym("r")
+
+            Result(Var(r),
+                Tup(Decl(U(Var(r))),
+                Tup(Decl(U(Var(v1))),
+                Tup(Decl(U(Var(v2))),
+                Tup(Assign(Var(v1), t1),
+                Tup(Assign(Var(v2), t2),
+                Tup(Define("SWAP", List("a, b"), "(((a) ^= (b)), ((b) ^= (a)), ((a) ^= (b)))"),
+                Tup(Assign(Var(r), Call("SWAP", List(Var(v1), Var(v2)))), Null()))))))))
         }
 
         // Function definitions collected in code generator
@@ -129,20 +170,58 @@ object TwiddleAST {
 
         def num[A](v: A) = Tup(Num(v), Null())
         def bool(b: Boolean) = Tup(Bool(b), Null())
-        def ifThenElse_[A] : AST[_] => (() => AST[_]) => (() => AST[_]) => AST[_] =
-                b => t => e => Tup(IfThenElse(b, t(), e()), Null())
-               
+
+        val IntClass = classTag[Int]
+        val DoubleClass = classTag[Double]
+        val StringClass = classTag[String]
+        val FloatClass = classTag[Float]
+        def ifThenElse[A](b: AST[Boolean])(t: (() => AST[A]))(e: (() => AST[A]))(implicit tag: ClassTag[A]): AST[A] =
+        {
+            val cond = gensym("cond")
+            val conseq = gensym("cons")
+            val alt = gensym("alt")
+            val (conseqAST, altAST) = tag match {
+                case IntClass => (I(Var(conseq)), I(Var(alt)))
+                case DoubleClass => (D(Var(conseq)), D(Var(alt)))
+                case FloatClass => (F(Var(conseq)), F(Var(alt)))
+                case StringClass => (S(Var(conseq)), S(Var(alt)))
+                case _ => (U(Var(conseq)), U(Var(alt)))
+            }
+            Tup(Decl(I(Var(cond))),
+            Tup(Decl(conseqAST),
+            Tup(Decl(altAST),
+            Tup(Assign(Var(cond), b),
+            Tup(IfThenElse(Var(cond), Assign(Var(conseq), t()), Assign(Var(alt), e())), Null())))))
+        }
+
+        def ifThen[A](b: AST[Boolean])(t: (() => AST[A]))(implicit tag: ClassTag[A]): AST[Unit] =
+        {
+            val cond = gensym("cond")
+            val conseq = gensym("cons")
+            val conseqAST = tag match {
+                case IntClass => I(Var(conseq))
+                case DoubleClass => D(Var(conseq))
+                case FloatClass => F(Var(conseq))
+                case StringClass => S(Var(conseq))
+                case _ => U(Var(conseq))
+            }
+            Tup(Decl(I(Var(cond))),
+            Tup(Decl(conseqAST),
+            Tup(Assign(Var(cond), b),
+            Tup(IfThen(Var(cond), Assign(Var(conseq), t())), Null()))))
+        }
+
         def add[A: Numeric](a: AST[A], b: AST[A]): AST[A] = Tup(Plus(a, b), Null())
         def sub[A: Numeric](a: AST[A], b: AST[A]): AST[A] = Tup(Minus(a, b), Null())
         def mul[A: Numeric](a: AST[A], b: AST[A]): AST[A] = Tup(Times(a, b), Null())
         def div(a: AST[Int], b: AST[Int]): AST[Int] = Tup(Divide(a, b), Null())
         def mod(a: AST[Int], b: AST[Int]): AST[Int] =  Tup(Mod(a, b), Null())
         def cons(a: Any, b: Any) = Tup(a, b)
-        def car(t: AST[(AST[Any], AST[Any])]): AST[Any] = {
+        def car(t: Any): Any = {
             val Tup(a: Term, _) = t
             a
         }
-        def cdr(t: AST[(AST[Any], AST[Any])]): AST[Any] = {
+        def cdr(t: Any): Any = {
             val Tup(_, b: Term) = t
             b
         }
