@@ -16,6 +16,12 @@ object CodeGen {
   // ? use LMS (eval.scala in LMS tutorial; Ops[T[_]])
   // either eval/pretty print code or generete C code
 
+  def run(ast: AST[_]): Unit = {
+    reset()
+    TwiddleAST.reset()
+    eval(ast)
+  }
+
   def eval(ast: AST[_]): Unit = {
     ast match {
       case Tup(hd: Term, Tup(tl1, tl2)) => eval_term(hd); println(";"); eval(Tup(tl1, tl2))
@@ -166,8 +172,20 @@ object CodeGen {
         emitMainEnd()
         emitGenFooter()
         Left(filename)
-      } catch { case e: Throwable => println("ERROR occurred during twiddle code generation");Right(e.printStackTrace()) }
+      } catch {
+        case e: Throwable => println("ERROR occurred during twiddle code generation");
+                             Right(e.printStackTrace())
+      } finally {
+        reset()
+        TwiddleAST.reset()
+      }
     }
+  }
+
+  def reset() = {
+    tmpNameCtr = 0
+    lambdaDefs.clear()
+    defines.clear()
   }
 
   def runsrc(arg: Either[String, Unit]) = {

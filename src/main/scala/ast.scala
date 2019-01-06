@@ -37,7 +37,7 @@ object TwiddleAST {
     case class Cast(c: Term, e: Term) extends Term
     case class IfThenElse(cond: Term, conseq: Term, alt: Term) extends Term
     case class IfThen(cond: Term, conseq: Term) extends Term
-    case class TernaryIf(cond: Term, conseq: Term, alt: Term) extends Term // TODO: DRY
+    case class TernaryIf(cond: Term, conseq: Term, alt: Term) extends Term
     case class Ref(e: Term) extends Term // pointer dereference
     case class Null() extends Term // null type
     case class Length(s: CStr) extends Term // null type
@@ -66,12 +66,12 @@ object TwiddleAST {
     import scala.reflect._
     import Syntax._
 
-    implicit object EmitTwiddleAST extends Exp[AST] {
-        var varCtr = 0
-        def fresh() = { varCtr += 1; varCtr }
-        def gensym(varName: String) = { s"$varName${fresh()}" }
-        def reset() = { varCtr = 0 }
+    var varCtr = 0
+    def fresh() = { varCtr += 1; varCtr }
+    def gensym(varName: String) = { s"$varName${fresh()}" }
+    def reset() = { varCtr = 0 }
 
+    implicit object EmitTwiddleAST extends Exp[AST] {
         // We represent bits as unsigned integers in the generated C.
         // At this level (in Scala) its just another integer.
         // Bit operations in the twiddle IR are responsible

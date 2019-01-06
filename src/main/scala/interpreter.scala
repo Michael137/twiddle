@@ -15,7 +15,7 @@ object Interpreter {
   // Simple evaluator
   type Id[A] = A
   implicit object Eval extends Exp[Id] {
-    implicit def d2i(x: Double): Int = x
+    implicit def d2i(x: Double): Int = x.toInt
     def bits(a: Int): BitSet = BitSet.fromBitMaskNoCopy(Array(a))
     def reverseBitsParallel(b: BitSet): BitSet = reverseBits(b)
     def reverseBits(b: BitSet): BitSet = {
@@ -24,7 +24,7 @@ object Interpreter {
       var flipped = (1 to bitlen).diff(arr).toArray
       collection.immutable.BitSet.empty ++ flipped
     }
-    def hasZero(b: BitSet): Boolean = (b.toArray).contains(0)
+    def hasZero(b: BitSet): Boolean = (b.toArray).size != 32
     def swapBits(a: BitSet, b: BitSet): (BitSet, BitSet) = (b, a)
     
     def add[A: Numeric](a: A, b: A): A = implicitly[Numeric[A]].plus(a,b)
