@@ -75,7 +75,7 @@ object TwiddleTests {
 
     def ifTest2[T[_]](s:Exp[T]) = {
         import s._
-        (ifThenElse(bool(true))
+        (ifThenElse(bool(false))
             (() => add(num(3.5), num(3.6)))
             (() => (ifThenElse(bool(true))
                     (() => add(num(3.5), num(3.6)))
@@ -105,6 +105,7 @@ object Main {
 
     def testPrinter() = {
         check(ifTest(Show), "(if true then (3.5 + 3.6) else 5.5)")
+        check(ifTest2(Show), "(if false then (3.5 + 3.6) else (if true then (3.5 + 3.6) else 5.5))")
         check(lamTest(Show), "\\x1.\\x2.(x1 (x1 x2))")
         check(lamTest2(Show), "(\\x3.log10(x3) 20.0)")
         check(beginTest(Show), "(cdr (cdr (cdr (cons (if true then log10(3.0)/log10(2) else (2.0 + 5.0)) (cons (5 + 5) (cons (5.0 + log10(3.0)/log10(2)) (log10(5.0)/log10(2) + log10(3.0)/log10(2))))))))")
@@ -112,10 +113,13 @@ object Main {
         check(stringTest(Show), "\"Hello, World!\".reverse")
         check(reversebitTest(Show), "List(0b11100010001100101001101100110001, 0b11100010001110100010100010011000)")
         check(printTest(Show), "(begin , (print , log10(10.2), log10(20.2), log10(30.2)))")
+        check(hasZeroTest(Show), "(hasZero? 0b00000000000000000000000000001010)")
+        check(swapBitsTest(Show), "(0b00000000000000000000000000001111, 0b00000000000000000000000000001010)")
     }
 
     def testEval() = {
         check(ifTest(Eval), "7.1")
+        check(ifTest2(Eval), "7.1")
         check(lamTest(Eval)({ x: Int => x + x })(10), "40")
         check(lamTest2(Eval), "1.3010299956639813")
         check(beginTest(Eval), "3.9068905956085187")

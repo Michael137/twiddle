@@ -8,6 +8,8 @@ import scala.language.implicitConversions
 import scala.math._
 import shapeless._
 import syntax.typeable._
+// import scala.reflect.runtime.currentMirror
+// import scala.tools.reflect.ToolBox
 
 object Interpreter {
   import Syntax._
@@ -64,6 +66,8 @@ object Interpreter {
     implicit def d2i(x: String): String = x
     def bits(a: String): String = {
       var s = ""
+      // val toolbox = currentMirror.mkToolBox()
+      // val comp = toolbox.eval(toolbox.parse(a))
       val bits = BitSet.fromBitMaskNoCopy(Array(a.toLong))
       val bitlen = 32 // bits.reduceLeft(_ max _)
       for(i <- 1 to bitlen)
