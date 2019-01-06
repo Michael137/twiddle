@@ -68,7 +68,7 @@ if( haszero(x) )
 - [ ] Add optimization facilities
 - [x] Build out core library
 - [ ] OpenMP codegen ~~for LMS~~?
-~~- [ ] Add verifier and extend~~
+- [x] ~~Add verifier and extend~~
 - [x] ~~ScalaTest support~~ Testsuite
 - [ ] Extend with LMS
 
