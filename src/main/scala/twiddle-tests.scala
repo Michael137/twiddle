@@ -129,7 +129,7 @@ object Main {
         check(printTest(Eval), "()")
         check(hasZeroTest(Eval), "true")
         check(swapBitsTest(Eval), "(BitSet(1, 2, 3, 4),BitSet(2, 4))")
-        check(swapBitsTest2(Eval), "()")
+        check(swapBitsTest2(Eval), "(BitSet(0),BitSet(2, 4))")
     }
 
     def testEmitTwiddleAST() = {

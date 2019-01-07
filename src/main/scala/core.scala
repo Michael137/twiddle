@@ -24,7 +24,7 @@ object Syntax {
   trait Bools[T[_]] {
     def bool(b: Boolean): T[Boolean]
     def ifThenElse[A](b: T[Boolean])(t: (() => T[A]))(e: (() => T[A]))(implicit tag: ClassTag[A]): T[A]
-    def ifThen[A](b: T[Boolean])(t: (() => T[A]))(implicit tag: ClassTag[A]): T[Unit]
+    def ifThen[A](b: T[Boolean])(t: (() => T[A]))(implicit tag: ClassTag[A]): T[Any]
     def ternaryIf[A] : T[Boolean] => (() => T[A]) => (() => T[A]) => T[A]
     def and(a: T[Boolean], b: T[Boolean]): T[Boolean]
     def or(a: T[Boolean], b: T[Boolean]): T[Boolean]

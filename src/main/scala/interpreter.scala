@@ -37,7 +37,7 @@ object Interpreter {
     def num[A](v: A) = v
     def bool(v: Boolean) = v
     def ifThenElse[A](b: Id[Boolean])(t: (() => Id[A]))(e: (() => Id[A]))(implicit tag: ClassTag[A]): Id[A] = if (b) { t () } else { e () }
-    def ifThen[A](b: Id[Boolean])(t: (() => Id[A]))(implicit tag: ClassTag[A]): Id[Unit] = if (b) { t () }
+    def ifThen[A](b: Id[Boolean])(t: (() => Id[A]))(implicit tag: ClassTag[A]): Id[Any] = if (b) { t () } else null
     def lam[A: ClassTag, B: ClassTag](f : A => B) = f
     def app[A, B] = (f : A => B) => (p : A) => f(p)
     def cons(a: Any, b: Any) = (a, b)
