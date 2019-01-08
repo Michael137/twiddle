@@ -4,11 +4,12 @@ Write high-level control flow => get correct optimized bit-twiddled parallel C c
 # Design
 * Embedded DSL
   * Host language: Scala
-  - [ ] Parser
-  - [ ] AST
+  - [x] Tagless Final Interpreter
+    - Evaluator, Tracer, Twiddle AST emitter
+  - [x] AST
   - [ ] Optimizers (twiddler/parallelizer) => adds annotations to AST
-  - [ ] CodeGen module
-  - [ ] Verifier module
+  - [x] CodeGen module
+  - [x] ~~Verifier module~~
 
 ## DSL Overview
 * Primitives: integers, bit-vector
