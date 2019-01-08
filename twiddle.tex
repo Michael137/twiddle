@@ -214,7 +214,7 @@ We chose Scala for primarily for following reasons:
 \begin{itemize}
 	\item Functional features that benefit implementation complexity
 	\item Flexible type sytem
-	\item Reflection application
+	\item Reflection capabilities
 	\item Library support for staging
 \end{itemize}
 
@@ -234,16 +234,23 @@ code generation and optimization be done through LMS.
 Of course similar features are avaiable in languages like Haskell and Ocaml and stagin/metaprogramming facilities in frameworks like Template Haskell and MetaOcaml, however, due to experience with prior Scala and its mature and a reflection API that is part of the \textit{language standard}
 served as an advantage over the alternatives.
 
-\subsection{Tagless Final Style Embeddings}\label{subsec:tagless}
-TODO
+\subsection{Partially Tagless Final Style Embeddings}\label{subsec:tagless}
+EXPLAIN TAGLESS STYLE USING PAPER While the core language is implemented as a tagless-final interpreter, our code generation backened uses a tagged approach. An advantage of a tagless approach is that encourages to carefully think about the type signatures of the core language features. Since a term's interpretation
+can vastly differ between evaluators depending on the choice of abstract type wrapper, a poorly chosen API can lead to difficult implementations that work across all evaluation schemes and can potentially cause the implementor to tap into a host language's reflection capabilities.
+
+An alternative to our case-based code generation could have been to implement the code generation as just another tagless interpreter and skip the creation of an AST. However, this could prove cumbersome to combine with optimization passes such as a parallelizer that works best on a graph based representation of a program. Ultimately,
+the pipeline remains the same: First build an IR of the program. Then transform the IR into target.
+
+Since C is a language of vastly different structure and semantics than both the host language and the user-level language, a separation between front-end evaluation and code-generation could benefit the extensibility of the framework. Essentially we can now imagine alternative AST generators, ones that produce an AST with nodes that are optimized for example w.r.t code size instead of just being twiddled. Our design achieves
+a clear separation between analysis of the object language and the act of mere code-generation which can be reused for multiple forms of the AST.
+
+One downside of our approach is that we basically have to model the entire C language's semantics in our AST to be practical.
+
 \subsection{Lessons Learned}
 TODO
 Value of tagless final
 alternative methods of emitting C->should probably follow semantics of the codegenned language
 
-tagless if one interprets in vastly different manners for different use cases it can get difficult to choreograph the types to work properly although Scala helps with its type inference and type system flexibility
-\section{Conclusion \& Future Work}
-TODO
 \begin{itemize}
 	\item Benefits of shallow embeddings. Can fall back to scala features. Don't need to implement side effects in object language necessarily.
 	\item Extend LMS
@@ -255,6 +262,16 @@ TODO
 	\item eliminate need for redundant reassignments (reference example)
 	\item Instead of mapping from DSL to tiwddled C immediately could first map to C and then optionally bit-twiddle
 \end{itemize}
+
+tagless if one interprets in vastly different manners for different use cases it can get difficult to choreograph the types to work properly although Scala helps with its type inference and type system flexibility
+\section{Conclusion \& Future Work}
+Current limits of the framework include the amount of supported language features, intersection of the supported types between the user-language and C and the number of evaluators avaiable. Additionally, much of the current DSL fits the structure
+that the Scala LMS framework expects to be able to add code-generation and optimization facilities to multiple backends.
+
+Our language currently only supports basic string, integer and 32-bit bit types. C additionally supports various numeric unsigned/signed/numeric/fractional types of different sizes. Moreoever, we do not not support collection types such as arrays or structs (although they can be emitted through pointers via the AST). A natural improvement to Twiddle would be the extension of the core language
+to a larger conformance with the C language.
+
+A useful additional extension could be the verification of the output language. For this one could add annotations to the code that conform with available C verification backends such as Frama-C. Another option would be to investigate extensions to existing verified-C generation frameworks such as ``lms-verify'' \cite{amin2017lms}.
 
 \bibliographystyle{ieeetran}
 \bibliography{twiddle}
