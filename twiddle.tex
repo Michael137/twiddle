@@ -8,6 +8,9 @@
 \usepackage{graphicx}
 \usepackage{listings}
 \usepackage{color}
+\usepackage{flafter}
+
+\raggedbottom
 
 \definecolor{dkgreen}{rgb}{0,0.6,0}
 \definecolor{gray}{rgb}{0.5,0.5,0.5}
@@ -113,7 +116,31 @@ int main() {
 
 This demonstrates our goal of producing bit-twiddled code from a safer high-level language without have to worry about syntax, details of bit representation, operator precedence or undefined behaviour. In the example  the resulting value can be retrieved from variable \texttt{cons36}.
 
-\newpage
+\section{Run Instructions}
+\subsection{Running Tests}
+The project structure is adapted to the Scala ``sbt'' build tool. The \textbf{src/main/twiddle-tests.scala} contains feature test cases that showcase some of the functionality of Twiddle. To run them simply
+run \texttt{sbt run} from the the root directory.
+
+\subsection{Creating Snippets}
+\begin{enumerate}
+	\item Create a new file or use \textbf{src/main/playground.scala}
+	\item Create a function with following structure:
+	\begin{verbatim}
+		def example[T[_]](s:Exp[T]) = {
+		    import s._
+		    // Twiddle code goes here...
+		}
+	\end{verbatim}
+	\item Then call the function e.g. from a main() function, using one of the supported evaluators. When using \texttt{EmitTwiddleAST} you have several options of how to treat the AST currently:
+	\begin{itemize}
+		\item \texttt{Codegen.eval(example(EmitTwiddlAST))}
+		\item \texttt{Codegen.gensrc(example(EmitTwiddlAST))}
+		\item \texttt{Codegen.runsrc(Codegen.gensrc(example(EmitTwiddlAST)))}
+	\end{itemize}
+	The first will simply emit the Twiddled C code to stdout. The second method will generate a file called	\textbf{twiddle.c} that contains the emittted source. The third option shows how to run the emitted source. \texttt{Codegen.runsrc(...)} will compile and run \textbf{twiddle.c}.
+	\item Run from the root directory: sbt run
+\end{enumerate}
+
 \section{The Language \& Architecture}
 \begin{figure}[t]
 	\centering
@@ -150,9 +177,9 @@ Each term in the language is a function whose parameters and return type are wra
 The code generation part of the Twiddle framework is shown in the bottom two branches of the flow chart in figure \ref{twiddle_arch}. As a way to map modularly and extensibly between a high-level language like the lambda calculus variant in our case to a low-level language like C we introduced a intermediate representation (IR) of the user-level Twiddle code structured as an abstract syntax tree (AST). The IR language includes features that would not fit to the semantics of the high-level language but are needed for bit-twiddling or general operations in C. Nodes in the AST are all represented by the \texttt{abstract trait Term} and evaluation of the terms occurs on nested tuples of terms (i.e. \texttt{Tup(Term, Tup(Tup(Term, Term)...)...)}) to be able to conveniently manipulate it from within the evaluator of the AST. Where there is only a small set of one-to-one mappings between terms in the object language and actual C language constructs, the IR mimics a subset of valid terms in C. Figure DIAGRAM NEEDED shows valid terms in the Twiddle IR. Distinction between primitives, expressions, C language identifiers, etc. is not provided since our evaluators on the AST did not require it. The term types can, however, be refined with additional traits if one needs to special-case according to certain classes of C language features.
 
 \subsubsection{Builtins}
-There is no distinction between language features and built-in functions in Twiddle. Every language feature is a function that describes its evaluation in the interpreter context. We implement common operations in the associated traits and inject it into the abstract \texttt{Exp[T[\_]]} trait. These operations have been chosen with bit-twiddling in mind. More often than not there is a corresponding algorithm using bithacks CITATION NEEDED which the codegen back-end implements in the IR.
+There is no distinction between language features and built-in functions in Twiddle. Every language feature is a function that describes its evaluation in the interpreter context. We implement common operations in the associated traits and inject it into the abstract \texttt{Exp[T[\_]]} trait. These operations have been chosen with bit-twiddling in mind. More often than not there is a corresponding algorithm using bithacks \cite{anderson2005bit} which the codegen back-end implements in the IR.
 
-We considered several ways of supporting bit-twiddling operations. In the final version of Twiddle we have a specific bit-twiddling backend whose sole purpose is to translate arithmetic, string or bit operations, provided as language features, into equivalent bithacks CITATION NEEDED. While a step in the right direction, an alternative (or extension) would be to detect certain user patterns or even annotations in the source, and map the patterns into bithack patterns. An example could be the reversal of a string. If currently a user is not aware of the Twiddle provided builtin \texttt{reverse(s: T[String])}, a user might choose to implement his own reversal algorithm and Twiddle would simply generate plain C. A more advanced backend detects these patterns from the AST.
+We considered several ways of supporting bit-twiddling operations. In the final version of Twiddle we have a specific bit-twiddling backend whose sole purpose is to translate arithmetic, string or bit operations, provided as language features, into equivalent bithacks. While a step in the right direction, an alternative (or extension) would be to detect certain user patterns or even annotations in the source, and map the patterns into bithack patterns. An example could be the reversal of a string. If currently a user is not aware of the Twiddle provided builtin \texttt{reverse(s: T[String])}, a user might choose to implement his own reversal algorithm and Twiddle would simply generate plain C. A more advanced backend detects these patterns from the AST.
 
 \subsubsection{Bits}
 So far we have only discussed mathematical or string operations that utilize arithmetic or logical shift operators to achieve a task that would have required control flow constructs in a naive implementation. The term bit-twiddling, however, also encompasses operations directly on the bit representation of terms. For this purpose, we implemented the \texttt{bits(a: T[Int]): T[BitSet])} term in the core language. As the function definition implies, an evaluation of \texttt{bits} will turn an integer into a logical representation of bits. We say logical representation because this translation is different between the Twiddle front-end evaluators and the codegen IR. In the Twiddle AST bits are simply represented as integers. Operations on said integers that would in the C layer operate on bits are responsible for declaring the necessary integers as \texttt{unsigned long}. In the front-end evaluator, however, a conversion does take place from integer to a Scala BitSet.
@@ -179,21 +206,44 @@ int z = 2 * int x = 5; + 10 // Syntax error
 
 %To overcome some of Scala's type parameter constraints without adding unnecessary complexity, we introduce a dependency on the \textit{shapeless} framework \footnote{https://github.com/milessabin/shapeless} which permits casting on type parameters even in the presence of type erasure. The main use is the casting of numeric types to a Scala \texttt{Long} when passing them to the \texttt{bits} evaluation.
 
-Funcdefs
-Defines
-Eval prog first -> then emit defines
-IO
-Ensuring correct syntax
+To make sure the C preprocessor directives such as \texttt{\#include} and \texttt{\#define} are kept at the top of the file (although generally speaking C programmers might not want this), we keep a file global list of defines together with metainformation about them, such as name, paramters and body. We collect the information during AST evaluation and emit them
+during code generation (in \texttt{Codegen.gensrc(...)}).
 \section{Design Choices}
+\subsection{Scala}
+We chose Scala for primarily for following reasons:
+\begin{itemize}
+	\item Functional features that benefit implementation complexity
+	\item Flexible type sytem
+	\item Reflection application
+	\item Library support for staging
+\end{itemize}
+
+The combination of Scala ability to create type classes, pattern matching, first-class functions and mature reflection capabilities are a well-suited foundation
+for writing an interpreter or embed a DSL into it. We make use of type classes \cite{wadler1989make} to implement our tagless interpreter by having traits that represent
+the DSL's language features be defined for multiple implementations. Where we face issues with implementing functionality for individual interpreters, for example due to restrictions imposed by
+that interpreters abstract type (or sub-optimal design decisions), we use reflection in the form of \texttt{ClassTag} or \texttt{TypeTag}. Our code generation backend is essentially a
+pattern matcher on terms.
+
+The last point in regards to Rompf et al.'s Leightweight Modular Staging framework \cite{rompf2010lightweight} that uses type-driven staging to perform automatic binding time analysis and
+program specialization. It is attractive due to its extensibility to ones own DSL, providing multiple code generation targets including C and CUDA, which would have been ideal for Twiddle. Unfortunately, practical
+limitations including the lack of flexibility to implement control the amount, name and properties of generated variables (without significant implementation overhead). Additionally, because LMS shares code generation
+facilities between C++ and C, finding the correct combination of traits to mix into the Twiddle DSL to generate \textit{standard} C without creeping C++ into the mix proved challenging. After initial implementaiton using LMS
+we instead dropped support for the framework and instead built our own code generation facilities. However, since other DSLs targeting C have been implemented using LMS successfully \cite{lee2011implementing, amin2017lms}, a future iteration of Twiddle could have its
+code generation and optimization be done through LMS.
+
+Of course similar features are avaiable in languages like Haskell and Ocaml and stagin/metaprogramming facilities in frameworks like Template Haskell and MetaOcaml, however, due to experience with prior Scala and its mature and a reflection API that is part of the \textit{language standard}
+served as an advantage over the alternatives.
+
+\subsection{Tagless Final Style Embeddings}\label{subsec:tagless}
+TODO
 \subsection{Lessons Learned}
+TODO
 Value of tagless final
 alternative methods of emitting C->should probably follow semantics of the codegenned language
 
 tagless if one interprets in vastly different manners for different use cases it can get difficult to choreograph the types to work properly although Scala helps with its type inference and type system flexibility
-\subsection{Language Embedding}
-\subsection{Scala}
-\subsection{Tagless Final Style}\label{subsec:tagless}
 \section{Conclusion \& Future Work}
+TODO
 \begin{itemize}
 	\item Benefits of shallow embeddings. Can fall back to scala features. Don't need to implement side effects in object language necessarily.
 	\item Extend LMS
