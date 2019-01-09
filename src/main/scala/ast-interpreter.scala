@@ -153,9 +153,12 @@ object AstInterpreter {
         def mul[A: Numeric](a: AST[A], b: AST[A]): AST[A] = Tup(Times(a, b), Null())
         def div(a: AST[Int], b: AST[Int]): AST[Int] = Tup(Divide(a, b), Null())
         def mod(a: AST[Int], b: AST[Int]): AST[Int] =  {
-            val Tup(Num(n1), _) = a
+            // Numerator can be number or AST
+            val numAST = a match {
+                case Tup(Num(n1), _) => Num(n1.asInstanceOf[Int])
+                case otherwise => otherwise.asInstanceOf[Tup]
+            }
             val Tup(Num(n2), _) = b
-            val num = n1.asInstanceOf[Int] // TODO: genericize once support for non-integer mod is added
             val denom = n2.asInstanceOf[Int] // TODO: genericize once support for non-integer mod is added
             val isPowerOf2 = { x: Int => (x>0 && ((x & (x-1)) == 0)) } // From http://www.graphics.stanford.edu/~seander/bithacks.html
             val power = { x: Int => if(x == 0) 0 else 32 - Integer.numberOfLeadingZeros(x - 1) }
@@ -167,7 +170,7 @@ object AstInterpreter {
             val decls = Tup(Decl(U(numVar)),
                         Tup(Decl(U(denomVar)),
                         Tup(Decl(U(res)),
-                        Tup(Assign(numVar, Num(num)),
+                        Tup(Assign(numVar, numAST),
                         Tup(Assign(denomVar, Num(denom)), Null())))))
 
             if(isPowerOf2(denom)) { // Divisor is a power of 2 => Use arithmetic &
@@ -279,6 +282,9 @@ object AstInterpreter {
         def or(a: AST[Boolean], b: AST[Boolean]): AST[Boolean] = Or(a, b)
 
         def lt[A <% Ordered[A]](a: AST[A], b: AST[A]): AST[Boolean] = Lt(a, b)
+        def lte[A <% Ordered[A]](a: AST[A], b: AST[A]): AST[Boolean] = Lte(a, b)
+        def gt[A <% Ordered[A]](a: AST[A], b: AST[A]): AST[Boolean] = Gt(a, b)
+        def gte[A <% Ordered[A]](a: AST[A], b: AST[A]): AST[Boolean] = Gte(a, b)
 
         def for_(init: AST[Int],
                  cond: AST[Int] => AST[Boolean],
@@ -293,7 +299,7 @@ object AstInterpreter {
                  }
     }
 
-    implicit object EmitParallelAST extends ParallelExp[AST] {
+    implicit object EmitParallelAST extends Exp[AST] {
         implicit def d2i(x: Term): Term = x
 
         def bits(a: AST[Int]): Term = a
@@ -329,6 +335,9 @@ object AstInterpreter {
         def and(a: AST[Boolean], b: AST[Boolean]): AST[Boolean] = EmitTwiddleAST.and(a, b)
         def or(a: AST[Boolean], b: AST[Boolean]): AST[Boolean] = EmitTwiddleAST.or(a, b)
         def lt[A <% Ordered[A]](a: AST[A], b: AST[A]): AST[Boolean] = EmitTwiddleAST.lt(a, b)
+        def lte[A <% Ordered[A]](a: AST[A], b: AST[A]): AST[Boolean] = EmitTwiddleAST.lte(a, b)
+        def gt[A <% Ordered[A]](a: AST[A], b: AST[A]): AST[Boolean] = EmitTwiddleAST.gt(a, b)
+        def gte[A <% Ordered[A]](a: AST[A], b: AST[A]): AST[Boolean] = EmitTwiddleAST.gte(a, b)
 
         // 32-bit bit parity check in parallel
         def bitParity(bits: Term): Term = {
@@ -369,5 +378,41 @@ object AstInterpreter {
 
         def hasZero(b: Term): Term = EmitTwiddleAST.hasZero(b)
         def swapBits(a: Term, b: Term): Term = EmitTwiddleAST.swapBits(a, b)
+        def cons(a: Any, b: Any) = EmitTwiddleAST.cons(a,b)
+        def car(t: Any): Any = EmitTwiddleAST.car(t)
+        def cdr(t: Any): Any = EmitTwiddleAST.cdr(t)
+
+        def begin[A](as: List[AST[A]]): AST[A] = {
+            val exps = EmitTwiddleAST.begin(as)
+            Tup(
+                OmpPragma(
+                        List(("parallel", Nil)),
+                        Block(exps)
+                    ),
+                Null())
+        }
+
+        def log10(a: AST[Int]): AST[Int] = {
+            val Tup(t:Term, _) = a
+            val v = gensym("v")
+            Tup(Decl(D(Var(v))),
+            Tup(Assign(Var(v), t),
+            Tup(Call("log10", List(Var(v))),
+            Null())))
+        }
+        def log2(a: AST[Int]): AST[Int] = {
+            val Tup(t:Term, _) = a
+            val v = gensym("v")
+            Tup(Decl(D(Var(v))),
+            Tup(Assign(Var(v), t),
+            Tup(Call("log2", List(Var(v))),
+            Null())))
+        }
+
+        def lam[A: ClassTag, B: ClassTag](f: AST[A] => AST[B]): Term = EmitTwiddleAST.lam(f)
+        def app[A, B] = (f: AST[A => B]) => (arg: AST[A]) => EmitTwiddleAST.app(f)(arg)
+
+        def string(s: String): AST[String] = EmitTwiddleAST.string(s)
+        def reverse(a: AST[String]): AST[String] = EmitTwiddleAST.reverse(a)
     }
 }

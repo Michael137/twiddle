@@ -65,6 +65,9 @@ object Interpreter {
     }
 
     def lt[A <% Ordered[A]](a: A, b: A): Boolean = a < b
+    def lte[A <% Ordered[A]](a: A, b: A): Boolean = a <= b
+    def gt[A <% Ordered[A]](a: A, b: A): Boolean = a > b
+    def gte[A <% Ordered[A]](a: A, b: A): Boolean = a >= b
     def bitParity(a: BitSet): Int = if(a.size % 2 == 0) 1 else 0
   }
 
@@ -144,10 +147,11 @@ object Interpreter {
       """
     }
     
-    def lt[A <% Ordered[A]](a: String, b: String): String = {
-      s"$a < $b"
-    }
-
+    def lt[A <% Ordered[A]](a: String, b: String): String = s"$a < $b"
+    def lte[A <% Ordered[A]](a: String, b: String): String = s"$a <= $b"
+    def gt[A <% Ordered[A]](a: String, b: String): String = s"$a > $b"
+    def gte[A <% Ordered[A]](a: String, b: String): String = s"$a >= $b"
+    
     def bitParity(a: String): String = s"(bits-set-even? $a)"
   }
 }

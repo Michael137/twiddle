@@ -51,12 +51,13 @@ object CodegenInternal {
     case RShift(a, b) => print("("); eval_node(a); print(" >> "); eval_node(b); print(")")
     case LShift(a, b) => print("("); eval_node(a); print(" << "); eval_node(b); print(")")
     case Ref(e) => print("*("); eval_node(e); print(")")
-    case Tup(hd: Term, tl: Term) => eval_node(hd); eval_node(tl)
+    case Tup(hd: ASTNode, tl: ASTNode) => eval_node(hd); eval_node(tl)
     case Null() => ()
-    case Eq(e1, e2) => eval_node(e1); print(" == "); eval_node(e2)
-    case Gte(e1, e2) => eval_node(e1); print(" >= "); eval_node(e2)
-    case Gt(e1, e2) => eval_node(e1); print(" > "); eval_node(e2)
-    case Lt(e1, e2) => eval_node(e1); print(" < "); eval_node(e2)
+    case Eq(e1, e2) => eval_node(e1); print(" == "); eval_node(e2);
+    case Gte(e1, e2) => eval_node(e1); print(" >= "); eval_node(e2);
+    case Gt(e1, e2) => eval_node(e1); print(" > "); eval_node(e2);
+    case Lt(e1, e2) => eval_node(e1); print(" < "); eval_node(e2);
+    case Lte(e1, e2) => eval_node(e1); print(" <= "); eval_node(e2);
     case Length(s: CStr) => print("strlen("); eval_node(s); print(")")
     case For(init, cond, variant, body) => print("for("); eval_node(init); print(";"); eval_node(cond); print(";"); eval_node(variant); println(")")
                                           println("{"); eval_node(body); println("}")
@@ -117,6 +118,8 @@ object CodegenInternal {
       println
       eval_node(body)
     }
+
+    case Block(body) => println("{"); eval_node(body); println("}")
 
     case otherwise => println(s"Unknown AST node $otherwise")
   }
@@ -210,9 +213,11 @@ object Codegen {
       case Right(trace) => trace
     }
 
-    val compileCmd = s"""gcc -g -O0 -fopenmp $fileName -o twiddleOutFile"""
+    val compileCmd = s"""gcc -g -O0 -fopenmp -lm $fileName -o twiddleOutFile"""
     compileCmd !
     val runCmd = s"./twiddleOutFile"
     runCmd !
   }
+
+  def quote(s: String): String = s""""$s""""
 }

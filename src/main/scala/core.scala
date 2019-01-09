@@ -34,6 +34,9 @@ object Syntax {
     def and(a: T[Boolean], b: T[Boolean]): T[Boolean]
     def or(a: T[Boolean], b: T[Boolean]): T[Boolean]
     def lt[A <% Ordered[A]](a: T[A], b: T[A]): T[Boolean]
+    def lte[A <% Ordered[A]](a: T[A], b: T[A]): T[Boolean]
+    def gt[A <% Ordered[A]](a: T[A], b: T[A]): T[Boolean]
+    def gte[A <% Ordered[A]](a: T[A], b: T[A]): T[Boolean]
   }
 
   trait Lambda[T[_]] {
@@ -86,8 +89,4 @@ object Syntax {
   trait Exp[T[_]] extends CMathOps[T] with Bools[T] with Nums[T] with Arithmetic[T] with LispLike[T]
                                       with CStrOps[T] with Strings[T] with IOOps[T] with Lambda[T]
                                       with Bits[T] with Loops[T] with NullType[T]
-  
-  // Eventually not needed once EmitParallelAST supports all language features
-  trait ParallelExp[T[_]] extends Loops[T] with Bools[T] with Nums[T] with Arithmetic[T]
-                                           with IOOps[T] with NullType[T] with Bits[T]
 }

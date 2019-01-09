@@ -126,6 +126,14 @@ object TwiddleTests {
                 mod(num(25), num(3)) // (Power of 2) - 1
               ))
     }
+
+    def parforTest[T[_]](s:Exp[T]) = {
+        import s._
+        val x = num(0)
+        begin(List(
+            for_(x, i => lt(i, num(2)), i => add(i, num(1)),
+                i => prints(""""%d"""", add(i, i)))))
+    }
 }
 
 object Main {
@@ -188,22 +196,17 @@ object Main {
     }
 
     def testEmitParallelAST() = {
-        def parforTest[T[_]](s:ParallelExp[T]) = {
-            import s._
-            val x = num(0)
-            for_(x, i => lt(i, num(2)), i => add(i, num(1)),
-                i => prints(""""%d"""", add(i, i)))
-        }
-        gensrc(parforTest(EmitParallelAST))
+        gensrc(logTest(EmitParallelAST))
+        parforTest(EmitParallelAST)
+        swapBitsTest(EmitParallelAST)
+        parityTest(EmitParallelAST)
     }
 
     def main(args: Array[String]): Unit = {
-        testPrinter
-        testEval
-        testEmitTwiddleAST
+        // testPrinter
+        // testEval
+        // testEmitTwiddleAST
         testEmitParallelAST
-
-        gensrc(modTest(EmitTwiddleAST))
 
         println(s"====> $testsRun assertions tested <====")
     }

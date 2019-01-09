@@ -22,6 +22,7 @@ object TwiddleAST {
     case class Eq(e1: Term, e2: Term) extends Term
     case class Gte(e1: Term, e2: Term) extends Term
     case class Gt(e1: Term, e2: Term) extends Term
+    case class Lte(e1: Term, e2: Term) extends Term
     case class Lt(e1: Term, e2: Term) extends Term
     case class PreInc(e1: Term) extends Term
     case class Assign(v: Term, e: Term) extends Term
@@ -82,5 +83,6 @@ object ParallelAST {
     abstract class PTerm extends ASTNode
 
      // #pragma omp name1(params1..n1) name2(params2...n2) ... nameN(paramsN...nN) { /* body */ }
-    case class OmpPragma(pragmas: List[(String, List[String])], body: Term) extends PTerm
+    case class OmpPragma(pragmas: List[(String, List[String])], body: ASTNode) extends PTerm
+    case class Block(body: Term) extends PTerm
 }
