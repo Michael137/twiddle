@@ -85,7 +85,7 @@ for(int i = 0; i < 10000000000; i++)
 - [x] OpenMP codegen ~~for LMS~~?
 - [x] ~~Add verifier and extend~~
 - [x] ~~ScalaTest support~~ Testsuite
-- [ ] ~~Extend with LMS~~
+- [x] ~~Extend with LMS~~
 
 # Instructions
 1. Run LMS [installation instructions](https://github.com/TiarkRompf/virtualization-lms-core)
