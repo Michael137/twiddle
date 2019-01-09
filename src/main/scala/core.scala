@@ -7,10 +7,15 @@ import scala.language.higherKinds
 import scala.math.pow
 import scala.language.implicitConversions
 import scala.annotation.varargs
+import spire.syntax._
 
 object Syntax {
   trait Nums[T[_]] {
     def num[A](v: A): T[A]
+  }
+
+  trait NullType[T[_]] {
+    def null_(): T[Any]
   }
 
   trait Arithmetic[T[_]] {
@@ -28,11 +33,19 @@ object Syntax {
     def ternaryIf[A] : T[Boolean] => (() => T[A]) => (() => T[A]) => T[A]
     def and(a: T[Boolean], b: T[Boolean]): T[Boolean]
     def or(a: T[Boolean], b: T[Boolean]): T[Boolean]
+    def lt[A <% Ordered[A]](a: T[A], b: T[A]): T[Boolean]
   }
 
   trait Lambda[T[_]] {
     def lam[A: ClassTag, B: ClassTag](f: (T[A] => T[B])): T[A => B]
     def app[A, B] : T[A => B] => (T[A] => T[B])
+  }
+
+  trait Loops[T[_]] {
+    // Codegen should transform
+    // from: for(i <- 0 until 10) { /* do something */ }
+    // to: for(i = 0; i < 10; i = i + 1) { /* do something */ }
+    def for_(init: T[Int], cond: T[Int] => T[Boolean], variant: T[Int] => T[Int], body: T[Int] => T[Unit]): T[Unit]
   }
 
   trait LispLike[T[_]] {
@@ -56,7 +69,7 @@ object Syntax {
   }
 
   trait IOOps[T[_]] {
-    def prints[A](format: String, es: List[T[A]]): T[Unit]
+    def prints[A: ClassTag](format: String, es: T[A]): T[Unit]
   }
 
   trait Bits[T[_]] {
@@ -66,13 +79,17 @@ object Syntax {
     def reverseBitsParallel(b: T[BitSet]): T[BitSet]
     def hasZero(b: T[BitSet]): T[Boolean]
     def swapBits(a: T[BitSet], b: T[BitSet]): T[(BitSet, BitSet)]
-  }
 
-  trait Parallel[T[_]] {}
+    // bitParity
+  }
 
   trait Test[T[_]] {}
   
   trait Exp[T[_]] extends CMathOps[T] with Bools[T] with Nums[T] with Arithmetic[T] with LispLike[T]
                                       with CStrOps[T] with Strings[T] with IOOps[T] with Lambda[T]
-                                      with Bits[T]
+                                      with Bits[T] with Loops[T] with NullType[T]
+  
+  // Eventually not needed once EmitParallelAST supports all language features
+  trait ParallelExp[T[_]] extends Loops[T] with Bools[T] with Nums[T] with Arithmetic[T]
+                                           with IOOps[T] with NullType[T]
 }

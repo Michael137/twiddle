@@ -8,6 +8,7 @@ import scala.language.implicitConversions
 import scala.math._
 import shapeless._
 import syntax.typeable._
+import spire.syntax.cfor.cfor
 // import scala.reflect.runtime.currentMirror
 // import scala.tools.reflect.ToolBox
 
@@ -18,6 +19,7 @@ object Interpreter {
   type Id[A] = A
   implicit object Eval extends Exp[Id] {
     implicit def d2i(x: Double): Int = x.toInt
+    def null_() = null
     def bits(a: Int): BitSet = BitSet.fromBitMaskNoCopy(Array(a))
     def reverseBitsParallel(b: BitSet): BitSet = reverseBits(b)
     def reverseBits(b: BitSet): BitSet = {
@@ -55,15 +57,22 @@ object Interpreter {
     def string(s: String): String = s
     def reverse(a: String): String = a.reverse
     def begin[A](as: List[A]): A = { println(as);as(0) }
-    def prints[A](format: String, es: List[A]): Unit = print(es)
+    def prints[A: ClassTag](format: String, es: A): Unit = println(es)
     def and(a: Boolean, b: Boolean): Boolean = a && b
     def or(a: Boolean, b: Boolean): Boolean = a || b
+
+    def for_(init: Int, cond: Int => Boolean, variant: Int => Int, body: Int => Unit): Unit = {
+      cfor(init)(cond, variant) { body }
+    }
+
+    def lt[A <% Ordered[A]](a: A, b: A): Boolean = a < b
   }
 
   // Pretty-printer
   type CString[A] = String
   implicit object Show extends Exp[CString] {
     implicit def d2i(x: String): String = x
+    def null_() = ""
     def bits(a: String): String = {
       var s = ""
       // val toolbox = currentMirror.mkToolBox()
@@ -120,12 +129,24 @@ object Interpreter {
       ret + ")"
     }
 
-    def prints[A](format: String, es: List[String]): String = {
-      var ret = "(print "
-      es.map({s => ret += s", $s"})
+    def prints[A: ClassTag](format: String, es: String): String = {
+      var ret = s"(print $format, "
+      ret += es
       ret + ")"
     }
     def and(a: String, b: String): String = s"$a && $b"
     def or(a: String, b: String): String = s"$a || $b"
+
+    def for_(init: String, cond: String => String, variant: String => String, body:String => String): String = {
+      s"""
+      for(int i = $init, ${cond("x")}, ${variant("x")}) {
+        ${body("x")}
+      }
+      """
+    }
+    
+    def lt[A <% Ordered[A]](a: String, b: String): String = {
+      s"$a < $b"
+    }
   }
 }

@@ -1,99 +1,78 @@
 package twiddle.dsl
 
 import java.io.{PrintWriter,StringWriter,FileOutputStream}
-import scala.reflect._
-import scala.collection.BitSet
-import scala.language.higherKinds
 import scala.math.pow
-import scala.language.implicitConversions
 import sys.process._
 import scala.language.postfixOps
+import TwiddleAST._
+import ParallelAST._
+import GeneralAST._
+import scala.collection.mutable.HashMap
 
-object CodeGen {
-  import TwiddleAST._
-
-  // TODO: Tagless interpreter for Twiddle AST
-  // ? use LMS (eval.scala in LMS tutorial; Ops[T[_]])
-  // either eval/pretty print code or generete C code
-
-  def run(ast: AST[_]): Unit = {
-    reset()
-    TwiddleAST.reset()
-    eval(ast)
-  }
-
-  def eval(ast: AST[_]): Unit = {
-    ast match {
-      case Tup(hd: Term, Tup(tl1, tl2)) => eval_term(hd); println(";"); eval(Tup(tl1, tl2))
-      case Tup(hd: Term, Null()) => eval_term(hd)
-      case Result(v, t) => eval(t)
-      case _ => ()
-    }
-  }
-  
-  import scala.collection.mutable.HashMap
+object CodegenInternal {
   var defines = HashMap[String, String]()
   var lambdaDefs = HashMap[String, Func]()
   var tmpNameCtr = 0
-  def eval_term(t: Term): Unit = t match {
+  def eval_node(t: ASTNode): Unit = t match {
     case Num(n) => print(n)
     case CStr(s) => print(s""""$s"""")
     case Bool(b) => if(b) print(1) else print(0)
     case Var(s) => print(s)
-    case H(s) => print(s)
-    case Decl(e) => e match {
-      case F(v) => print("float "); eval_term(v); println(";")
-      case U(v) => print("unsigned int "); eval_term(v); println(";")
-      case I(v) => print("int "); eval_term(v); println(";")
-      case D(v) => print("double "); eval_term(v); println(";")
-      case S(v) => print("char* "); eval_term(v); println(";")
-    }
+    case H(s) => print(s) // Hex
+    case F(v) => print("float "); eval_node(v)
+    case U(v) => print("unsigned int "); eval_node(v)
+    case I(v) => print("int "); eval_node(v)
+    case D(v) => print("double "); eval_node(v)
+    case S(v) => print("char* "); eval_node(v)
+    case Decl(e) => eval_node(e); println(";")
     case Assign(v, e) => e match {
-      case Result(Var(vr), exp) => eval_term(exp); eval_term(v); print(" = "); println(vr); println(";")
-      case _ => eval_term(v); print(" = "); eval_term(e); println(";")
+      case Result(Var(vr), exp) => eval_node(exp); eval_node(v); print(" = "); println(vr); println(";")
+      case _ => eval_node(v); print(" = "); eval_node(e); println(";")
     }
-    case Cast(c, v) => print("("); eval_term(c); print(")"); eval_term(v)
-    case Const(e) => print("const "); eval_term(e)
+    case AssignInline(v, e) => eval_node(v); print(" = "); eval_node(e)
+    case Cast(c, v) => print("("); eval_node(c); print(")"); eval_node(v)
+    case Const(e) => print("const "); eval_node(e)
     case IntPtr() => print("int* ")
-    case Addr(e) => print("&("); eval_term(e); print(")")
-    case Minus(a, b) => eval_term(a); print(" - "); eval_term(b)
-    case Times(a, b) => eval_term(a); print(" * "); eval_term(b)
+    case Addr(e) => print("&("); eval_node(e); print(")")
+    case Minus(a, b) => eval_node(a); print(" - "); eval_node(b)
+    case Times(a, b) => eval_node(a); print(" * "); eval_node(b)
     case Plus(a, b) => (a, b) match {
       // ! extract into `summarizeEffects()` function
-      case (Result(v1, t1), Result(v2, t2)) => eval_term(t1); eval_term(t2); eval_term(v1); print(" + "); eval_term(v2)
-      case (Result(v, t), exp) => eval_term(t); eval_term(exp); print(" + "); eval_term(v)
-      case (exp, Result(v, t)) => eval_term(t); eval_term(exp); print(" + "); eval_term(v)
-      case (e1, e2) => eval_term(e1); print(" + "); eval_term(e2)
+      case (Result(v1, t1), Result(v2, t2)) => eval_node(t1); eval_node(t2); eval_node(v1); print(" + "); eval_node(v2)
+      case (Result(v, t), exp) => eval_node(t); eval_node(exp); print(" + "); eval_node(v)
+      case (exp, Result(v, t)) => eval_node(t); eval_node(exp); print(" + "); eval_node(v)
+      case (e1, e2) => eval_node(e1); print(" + "); eval_node(e2)
     }
     case IfThenElse(cond, conseq, alt) =>
-      print("if("); eval_term(cond); print(") {\n"); eval_term(conseq); print(";\n} else {\n"); eval_term(alt); println(";\n}")
+      print("if("); eval_node(cond); print(") {\n"); eval_node(conseq); print(";\n} else {\n"); eval_node(alt); println(";\n}")
     case IfThen(cond, conseq) =>
-      print("if("); eval_term(cond); print(") {\n"); eval_term(conseq); println(";\n}")
-    case TernaryIf(cond, conseq, alt) => print("("); eval_term(cond); print(") ? "); eval_term(conseq); print(" : "); eval_term(alt)
-    case RShift(a, b) => print("("); eval_term(a); print(" >> "); eval_term(b); print(")")
-    case LShift(a, b) => print("("); eval_term(a); print(" << "); eval_term(b); print(")")
-    case Ref(e) => print("*("); eval_term(e); print(")")
-    case Tup(hd: Term, tl: Term) => eval_term(hd); eval_term(tl)
+      print("if("); eval_node(cond); print(") {\n"); eval_node(conseq); println(";\n}")
+    case TernaryIf(cond, conseq, alt) => print("("); eval_node(cond); print(") ? "); eval_node(conseq); print(" : "); eval_node(alt)
+    case RShift(a, b) => print("("); eval_node(a); print(" >> "); eval_node(b); print(")")
+    case LShift(a, b) => print("("); eval_node(a); print(" << "); eval_node(b); print(")")
+    case Ref(e) => print("*("); eval_node(e); print(")")
+    case Tup(hd: Term, tl: Term) => eval_node(hd); eval_node(tl)
     case Null() => ()
-    case Gte(e1, e2) => eval_term(e1); print(" >= "); eval_term(e2)
-    case Gt(e1, e2) => eval_term(e1); print(" > "); eval_term(e2)
-    case Length(s: CStr) => print("strlen("); eval_term(s); print(")")
-    case For(init, cond, variant, body) => print("for("); eval_term(init); print(";"); eval_term(cond); print(";"); eval_term(variant); println(")")
-                                          println("{"); eval_term(body); println("}")
-    case XOR(n1, n2) => eval_term(n1); print(" ^ "); eval_term(n2)
-    case PreInc(v) => print("++("); eval_term(v); print(")")
-    case PostDec(v) => print("("); eval_term(v); print(")--")
-    case Result(v, e) => eval_term(e)
-    case SizeOf(a) => print("sizeof("); eval_term(a); print(")");
+    case Gte(e1, e2) => eval_node(e1); print(" >= "); eval_node(e2)
+    case Gt(e1, e2) => eval_node(e1); print(" > "); eval_node(e2)
+    case Lt(e1, e2) => eval_node(e1); print(" < "); eval_node(e2)
+    case Length(s: CStr) => print("strlen("); eval_node(s); print(")")
+    case For(init, cond, variant, body) => print("for("); eval_node(init); print(";"); eval_node(cond); print(";"); eval_node(variant); println(")")
+                                          println("{"); eval_node(body); println("}")
+    case XOR(n1, n2) => eval_node(n1); print(" ^ "); eval_node(n2)
+    case PreInc(v) => print("++("); eval_node(v); print(")")
+    case PostDec(v) => print("("); eval_node(v); print(")--")
+    case Result(v, e) => eval_node(e)
+    case SizeOf(a) => print("sizeof("); eval_node(a); print(")");
     case Macro(a) => print(a)
-    case RShiftEq(a, b) => eval_term(a); print(" >>= "); eval_term(b)
-    case LShiftEq(a, b) => eval_term(a); print(" <<= "); eval_term(b)
-    case BitOrEq(n1, n2) => eval_term(n1); print(" |= "); eval_term(n2)
-    case BitAnd(n1, n2) => print("("); eval_term(n1); print(" & "); eval_term(n2); print(")")
-    case BitOr(n1, n2) => print("("); eval_term(n1); print(" | "); eval_term(n2); print(")")
-    case And(a, b) => print("("); eval_term(a); print(" && "); eval_term(b); print(")")
-    case Or(a, b) => print("("); eval_term(a); print(" || "); eval_term(b); print(")")
-    case Define(vr, args, vl) =>
+    case RShiftEq(a, b) => eval_node(a); print(" >>= "); eval_node(b)
+    case LShiftEq(a, b) => eval_node(a); print(" <<= "); eval_node(b)
+    case BitOrEq(n1, n2) => eval_node(n1); print(" |= "); eval_node(n2)
+    case BitAnd(n1, n2) => print("("); eval_node(n1); print(" & "); eval_node(n2); print(")")
+    case BitOr(n1, n2) => print("("); eval_node(n1); print(" | "); eval_node(n2); print(")")
+    case And(a, b) => print("("); eval_node(a); print(" && "); eval_node(b); print(")")
+    case Or(a, b) => print("("); eval_node(a); print(" || "); eval_node(b); print(")")
+    case Define(vr, args, vl) => {
       var defStr = s"#define $vr"
       if(args.size != 0) {
         defStr += "("
@@ -103,25 +82,54 @@ object CodeGen {
       defStr += s" "
       defStr += vl
       defines += (vr -> defStr)
-    case Call(name, args: List[Var]) =>
+    }
+    case Call(name, args: List[Var]) => {
       val vals = args.map({ v: Var => v.s })
       print(s"""$name(${vals.mkString(",")})""")
-    case Printf(f, es) =>
-      val varnames = es.map({ t: Term => t match {
-          case Result(vr, exp) => eval_term(exp);vr.s
-          case tup: Tup => val tmpVarName = s"tmp${tmpNameCtr}";
-                                   tmpNameCtr+=1;
-                                   eval_term(Assign(Var(tmpVarName), tup)); tmpVarName
-        }
-      })
-      print(s"printf($f "); varnames.foreach({s => print(s", $s") }); println(");")
+    }
+
+    case Printf(f, es) => {
+      val Result(Var(varname), exp) = es
+      eval_node(exp)
+      print(s"printf($f, "); print(varname);println(");")
+    }
 
     case Func(ret, name, params, body) => lambdaDefs += (name -> Func(ret, name, params, body))
     case App(f: Term, t: Term) => f match {
-      case func: Func => eval_term(func.body(t))
+      case func: Func => eval_node(func.body(t))
+    }
+
+    case OmpPragma(ps, body) => {
+      print("#pragma omp ")
+      ps.foreach({ 
+        case (name, args) => {
+            print(s"$name")
+            if(args.size != 0) {
+              print("(")
+              print(args.mkString(","))
+              print(")")
+            }
+            print(" ")
+          }
+      })
+      println
+      eval_node(body)
     }
 
     case otherwise => println(s"Unknown AST node $otherwise")
+  }
+}
+
+object Codegen {
+  import CodegenInternal._
+
+  def eval(ast: ASTNode): Unit = {
+    ast match {
+      case Tup(hd: ASTNode, Tup(tl1, tl2)) => eval_node(hd); println(";"); eval(Tup(tl1, tl2))
+      case Tup(hd: ASTNode, Null()) => eval_node(hd)
+      case Result(v, t) => eval(t)
+      case _ => ()
+    }
   }
 
   def emitGenHeader() = println("// START OF CODE GENERATED BY TWIDDLE")
@@ -144,7 +152,13 @@ object CodeGen {
     println("\n; return 0;\n}")
   }
 
-  def gensrc(ast: AST[_]): Either[String, Unit] = {
+  def run(ast: ASTNode): Unit = {
+    reset()
+    TwiddleAST.reset()
+    eval(ast)
+  }
+
+  def gensrc(ast: ASTNode): Either[String, Unit] = {
     import java.io._
 
     val (filename, program) = ast match {
@@ -194,7 +208,7 @@ object CodeGen {
       case Right(trace) => trace
     }
 
-    val compileCmd = s"""gcc -g -O0 $fileName -o twiddleOutFile"""
+    val compileCmd = s"""gcc -g -O0 -fopenmp $fileName -o twiddleOutFile"""
     compileCmd !
     val runCmd = s"./twiddleOutFile"
     runCmd !

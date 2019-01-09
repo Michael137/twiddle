@@ -170,7 +170,9 @@ Each term in the language is a function whose parameters and return type are wra
 
 \textit{Pretty-Printer} corresponds to the \texttt{implicit object Show} in \textbf{interpreter.scala}. Here all terms are of type \texttt{String} and evaluation of a term yields its pretty-printed version.
 
-\textit{EmitTwiddleAST} corresponds to the Scala object of the same name in \textbf{codegen.scala}. This is the core of the Twiddle code generator.
+\textit{EmitTwiddleAST} corresponds to the Scala object of the same name in \textbf{ast-interpreter.scala}. This is the core of the Twiddle code generator.
+
+\textit{EmitParallelAST} corresponds to the \texttt{implicit object EmitParallelAST} in \textbf{ast-interpreter.scala}. This evaluator produces an AST with annotations for parallelization. The code generator uses the annotations to generate additional OpenMP pragmas.
 
 \section{Codegen}
 \subsection{Twiddle AST}

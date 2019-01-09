@@ -10,6 +10,7 @@ libraryDependencies ++= Seq(
 )
 
 libraryDependencies += "org.scalatest" % "scalatest_2.11" % "2.2.2"
+libraryDependencies += "org.typelevel" %% "spire" % "0.16.0"
 
 scalacOptions += "-deprecation"
 scalacOptions += "-feature"
