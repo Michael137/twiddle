@@ -88,7 +88,7 @@ for(int i = 0; i < 10000000000; i++)
 - [x] ~~Extend with LMS~~
 
 # Instructions
-1. Run LMS [installation instructions](https://github.com/TiarkRompf/virtualization-lms-core)
+1. ~~Run LMS [installation instructions](https://github.com/TiarkRompf/virtualization-lms-core)~~
 2. sbt
 3. run
 
