@@ -7,7 +7,7 @@ Write high-level control flow => get correct optimized bit-twiddled parallel C c
   - [x] Tagless Final Interpreter
     - Evaluator, Tracer, Twiddle AST emitter
   - [x] AST
-  - [ ] Optimizers (twiddler/parallelizer) => adds annotations to AST
+  - [x] Optimizers (twiddler/parallelizer) => adds annotations to AST
   - [x] CodeGen module
   - [x] ~~Verifier module~~
 
@@ -82,15 +82,20 @@ for(int i = 0; i < 10000000000; i++)
 - [x] Add code generation facilities to core language
 - [ ] Add optimization facilities
 - [x] Build out core library
-- [ ] OpenMP codegen ~~for LMS~~?
+- [x] OpenMP codegen ~~for LMS~~?
 - [x] ~~Add verifier and extend~~
 - [x] ~~ScalaTest support~~ Testsuite
-- [ ] Extend with LMS
+- [x] ~~Extend with LMS~~
 
 # Instructions
-1. Run LMS [installation instructions](https://github.com/TiarkRompf/virtualization-lms-core)
+1. ~~Run LMS [installation instructions](https://github.com/TiarkRompf/virtualization-lms-core)~~
 2. sbt
 3. run
+4. Choose main entry point (either testsuite or scratch area)
+
+or to run all tests immediately (and continuously):
+
+1. sbt ~"runMain twiddle.dsl.Main"
 
 # Resources
 * https://github.com/namin/lms-verify
