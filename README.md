@@ -93,7 +93,7 @@ for(int i = 0; i < 10000000000; i++)
 3. run
 4. Choose main entry point (either testsuite or scratch area)
 
-or to run all tests immediately:
+or to run all tests immediately (and continuously):
 
 1. sbt ~"runMain twiddle.dsl.Main"
 
