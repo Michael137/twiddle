@@ -7,7 +7,7 @@ Write high-level control flow => get correct optimized bit-twiddled parallel C c
   - [x] Tagless Final Interpreter
     - Evaluator, Tracer, Twiddle AST emitter
   - [x] AST
-  - [ ] Optimizers (twiddler/parallelizer) => adds annotations to AST
+  - [x] Optimizers (twiddler/parallelizer) => adds annotations to AST
   - [x] CodeGen module
   - [x] ~~Verifier module~~
 
