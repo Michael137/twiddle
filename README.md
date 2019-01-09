@@ -91,6 +91,11 @@ for(int i = 0; i < 10000000000; i++)
 1. ~~Run LMS [installation instructions](https://github.com/TiarkRompf/virtualization-lms-core)~~
 2. sbt
 3. run
+4. Choose main entry point (either testsuite or scratch area)
+
+or to run all tests immediately:
+
+1. sbt ~"runMain twiddle.dsl.Main"
 
 # Resources
 * https://github.com/namin/lms-verify
