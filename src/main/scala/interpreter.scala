@@ -21,7 +21,6 @@ object Interpreter {
     implicit def d2i(x: Double): Int = x.toInt
     def null_() = null
     def bits(a: Int): BitSet = BitSet.fromBitMaskNoCopy(Array(a))
-    def reverseBitsParallel(b: BitSet): BitSet = reverseBits(b)
     def reverseBits(b: BitSet): BitSet = {
       var bitlen = 32 // b.reduceLeft(_ max _)
       val arr = b.toArray
@@ -56,7 +55,7 @@ object Interpreter {
     def ternaryIf[A] : Boolean => (() => A) => (() => A) => A = b => t => e => if (b) { t () } else { e () }
     def string(s: String): String = s
     def reverse(a: String): String = a.reverse
-    def begin[A](as: List[A]): A = { println(as);as(0) }
+    def begin[A](as: List[A]): A = as.last
     def prints[A: ClassTag](format: String, es: A): Unit = println(es)
     def and(a: Boolean, b: Boolean): Boolean = a && b
     def or(a: Boolean, b: Boolean): Boolean = a || b
@@ -66,6 +65,7 @@ object Interpreter {
     }
 
     def lt[A <% Ordered[A]](a: A, b: A): Boolean = a < b
+    def bitParity(a: BitSet): Int = if(a.size % 2 == 0) 1 else 0
   }
 
   // Pretty-printer
@@ -79,11 +79,10 @@ object Interpreter {
       // val comp = toolbox.eval(toolbox.parse(a))
       val bits = BitSet.fromBitMaskNoCopy(Array(a.toLong))
       val bitlen = 32 // bits.reduceLeft(_ max _)
-      for(i <- 1 to bitlen)
+      for(i <- 0 to bitlen - 1)
         if(bits(i)) s += "1" else s += "0"
       "0b" + s.reverse
     }
-    def reverseBitsParallel(b: String): String = reverseBits(b)
     def reverseBits(b: String): String = {
       var s = b.substring(2)
       "0b" + ((s.replaceAll("0", "#")).replaceAll("1", "0")).replaceAll("#", "1")
@@ -148,5 +147,7 @@ object Interpreter {
     def lt[A <% Ordered[A]](a: String, b: String): String = {
       s"$a < $b"
     }
+
+    def bitParity(a: String): String = s"(bits-set-even? $a)"
   }
 }

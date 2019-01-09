@@ -76,11 +76,9 @@ object Syntax {
     implicit def d2i(x: T[Double]): T[Int]
     def bits(a: T[Int]): T[BitSet]
     def reverseBits(b: T[BitSet]): T[BitSet]
-    def reverseBitsParallel(b: T[BitSet]): T[BitSet]
     def hasZero(b: T[BitSet]): T[Boolean]
     def swapBits(a: T[BitSet], b: T[BitSet]): T[(BitSet, BitSet)]
-
-    // bitParity
+    def bitParity(bits: T[BitSet]): T[Int] // 1 if odd bits set, 0 if even
   }
 
   trait Test[T[_]] {}
@@ -91,5 +89,5 @@ object Syntax {
   
   // Eventually not needed once EmitParallelAST supports all language features
   trait ParallelExp[T[_]] extends Loops[T] with Bools[T] with Nums[T] with Arithmetic[T]
-                                           with IOOps[T] with NullType[T]
+                                           with IOOps[T] with NullType[T] with Bits[T]
 }

@@ -32,24 +32,6 @@ object AstInterpreter {
         implicit def d2i(x: Term): Term = x
         def null_() = Null()
         def bits(a: AST[Int]): Term = a
-        def reverseBitsParallel(b: Term): Term = {
-            val Tup(t: Term, Null()) = b
-            val v = gensym("v")
-            Result(Var(v),
-                    Tup(Decl(U(Var(v))),
-                    Tup(Assign(Var(v), t),
-                    Tup(Assign(Var(v), BitOr(BitAnd(RShift(Var(v), Num(1)), H("0x55555555")),
-                                             LShift(BitAnd(Var(v), H("0x55555555")), Num(1)))),
-                    Tup(Assign(Var(v), BitOr(BitAnd(RShift(Var(v), Num(2)), H("0x33333333")),
-                                             LShift(BitAnd(Var(v), H("0x33333333")), Num(2)))),
-                    Tup(Assign(Var(v), BitOr(BitAnd(RShift(Var(v), Num(4)), H("0x0F0F0F0F")),
-                                             LShift(BitAnd(Var(v), H("0x0F0F0F0F")), Num(4)))),
-                    Tup(Assign(Var(v), BitOr(BitAnd(RShift(Var(v), Num(8)), H("0x00FF00FF")),
-                                             LShift(BitAnd(Var(v), H("0x00FF00FF")), Num(8)))),
-                    Tup(Assign(Var(v), BitOr(RShift(Var(v), Num(16)),
-                                             LShift(Var(v),Num(16)))),
-                    Null()))))))))
-        }
         def reverseBits(b: Term): Term = {
             val Tup(t: Term, Null()) = b
             val r = gensym("r")
@@ -68,23 +50,6 @@ object AstInterpreter {
                             Tup(BitOrEq(Var(r), BitAnd(Var(v), Num(1))),
                             Tup(PostDec(Var(s)), Null())))),
                     Tup(LShiftEq(Var(r), Var(s)), Null())))))))))
-        }
-
-        // 32-bit
-        def bitParityParallel(bits: Term): Term = {
-            val Tup(t: Term, Null()) = bits
-            val v = gensym("v");
-            val res = gensym("res");
-            Result(Var(res),
-                    Tup(Decl(U(Var(v))),
-                    Tup(Decl(U(Var(res))),
-                    Tup(Assign(Var(v), t),
-                    Tup(Assign(Var(v), XOR(Var(v), RShift(Var(v), Num(16)))),
-                    Tup(Assign(Var(v), XOR(Var(v), RShift(Var(v), Num(8)))),
-                    Tup(Assign(Var(v), XOR(Var(v), RShift(Var(v), Num(4)))),
-                    Tup(Assign(Var(v), BitAnd(Var(v), H("0xf"))),
-                    Tup(Assign(Var(res), BitAnd(RShift(H("0x6996"), Var(v)), Num(1))),
-                    Null())))))))))
         }
 
         // 32-bit
@@ -187,7 +152,49 @@ object AstInterpreter {
         def sub[A: Numeric](a: AST[A], b: AST[A]): AST[A] = Tup(Minus(a, b), Null())
         def mul[A: Numeric](a: AST[A], b: AST[A]): AST[A] = Tup(Times(a, b), Null())
         def div(a: AST[Int], b: AST[Int]): AST[Int] = Tup(Divide(a, b), Null())
-        def mod(a: AST[Int], b: AST[Int]): AST[Int] =  Tup(Mod(a, b), Null())
+        def mod(a: AST[Int], b: AST[Int]): AST[Int] =  {
+            val Tup(Num(n1), _) = a
+            val Tup(Num(n2), _) = b
+            val num = n1.asInstanceOf[Int] // TODO: genericize once support for non-integer mod is added
+            val denom = n2.asInstanceOf[Int] // TODO: genericize once support for non-integer mod is added
+            val isPowerOf2 = { x: Int => (x>0 && ((x & (x-1)) == 0)) } // From http://www.graphics.stanford.edu/~seander/bithacks.html
+            val power = { x: Int => if(x == 0) 0 else 32 - Integer.numberOfLeadingZeros(x - 1) }
+
+            val numVar = Var(gensym("n"))
+            val denomVar = Var(gensym("d"))
+            val res = Var(gensym("m"))
+
+            val decls = Tup(Decl(U(numVar)),
+                        Tup(Decl(U(denomVar)),
+                        Tup(Decl(U(res)),
+                        Tup(Assign(numVar, Num(num)),
+                        Tup(Assign(denomVar, Num(denom)), Null())))))
+
+            if(isPowerOf2(denom)) { // Divisor is a power of 2 => Use arithmetic &
+                Result(res,
+                        Tup(decls,
+                        Tup(Assign(res, BitAnd(numVar, Minus(denomVar, Num(1)))), Null())))
+            } else if(isPowerOf2(denom + 1)) { // Divisor is a (power of 2) - 1 => No need for division
+            /*
+            for (m = n; n > d; n = m)
+            {
+                for (m = 0; n; n >>= s)
+                {
+                    m += n & d;
+                }
+            }
+            */
+                Result(res,
+                        Tup(decls,
+                        Tup(For(AssignInline(res, numVar), Gt(numVar, denomVar), AssignInline(numVar, res),
+                                For(AssignInline(res, Num(0)), numVar, RShiftEq(numVar, Num(power(denom))),
+                                    Assign(res, Plus(res, BitAnd(numVar, denomVar))))),
+                        Tup(Assign(res, TernaryIf(Eq(res, Num(0)), Num(0), res)),
+                        Null()))))
+            } else {
+                Tup(Mod(a, b), Null())
+            }
+        }
         def cons(a: Any, b: Any) = Tup(a, b)
         def car(t: Any): Any = {
             val Tup(a: Term, _) = t
@@ -289,6 +296,7 @@ object AstInterpreter {
     implicit object EmitParallelAST extends ParallelExp[AST] {
         implicit def d2i(x: Term): Term = x
 
+        def bits(a: AST[Int]): Term = a
         def null_() = Null()
         // Wrap EmitTwiddleAST in "omp for" pragma
         def for_(init: Term,
@@ -321,5 +329,45 @@ object AstInterpreter {
         def and(a: AST[Boolean], b: AST[Boolean]): AST[Boolean] = EmitTwiddleAST.and(a, b)
         def or(a: AST[Boolean], b: AST[Boolean]): AST[Boolean] = EmitTwiddleAST.or(a, b)
         def lt[A <% Ordered[A]](a: AST[A], b: AST[A]): AST[Boolean] = EmitTwiddleAST.lt(a, b)
+
+        // 32-bit bit parity check in parallel
+        def bitParity(bits: Term): Term = {
+            val Tup(t: Term, Null()) = bits
+            val v = gensym("v");
+            val res = gensym("res");
+            Result(Var(res),
+                    Tup(Decl(U(Var(v))),
+                    Tup(Decl(U(Var(res))),
+                    Tup(Assign(Var(v), t),
+                    Tup(Assign(Var(v), XOR(Var(v), RShift(Var(v), Num(16)))),
+                    Tup(Assign(Var(v), XOR(Var(v), RShift(Var(v), Num(8)))),
+                    Tup(Assign(Var(v), XOR(Var(v), RShift(Var(v), Num(4)))),
+                    Tup(Assign(Var(v), BitAnd(Var(v), H("0xf"))),
+                    Tup(Assign(Var(res), BitAnd(RShift(H("0x6996"), Var(v)), Num(1))),
+                    Null())))))))))
+        }
+
+        // Parallel version of bit reversal
+        def reverseBits(b: Term): Term = {
+            val Tup(t: Term, Null()) = b
+            val v = gensym("v")
+            Result(Var(v),
+                    Tup(Decl(U(Var(v))),
+                    Tup(Assign(Var(v), t),
+                    Tup(Assign(Var(v), BitOr(BitAnd(RShift(Var(v), Num(1)), H("0x55555555")),
+                                             LShift(BitAnd(Var(v), H("0x55555555")), Num(1)))),
+                    Tup(Assign(Var(v), BitOr(BitAnd(RShift(Var(v), Num(2)), H("0x33333333")),
+                                             LShift(BitAnd(Var(v), H("0x33333333")), Num(2)))),
+                    Tup(Assign(Var(v), BitOr(BitAnd(RShift(Var(v), Num(4)), H("0x0F0F0F0F")),
+                                             LShift(BitAnd(Var(v), H("0x0F0F0F0F")), Num(4)))),
+                    Tup(Assign(Var(v), BitOr(BitAnd(RShift(Var(v), Num(8)), H("0x00FF00FF")),
+                                             LShift(BitAnd(Var(v), H("0x00FF00FF")), Num(8)))),
+                    Tup(Assign(Var(v), BitOr(RShift(Var(v), Num(16)),
+                                             LShift(Var(v),Num(16)))),
+                    Null()))))))))
+        }
+
+        def hasZero(b: Term): Term = EmitTwiddleAST.hasZero(b)
+        def swapBits(a: Term, b: Term): Term = EmitTwiddleAST.swapBits(a, b)
     }
 }

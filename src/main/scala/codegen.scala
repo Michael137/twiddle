@@ -34,7 +34,7 @@ object CodegenInternal {
     case Const(e) => print("const "); eval_node(e)
     case IntPtr() => print("int* ")
     case Addr(e) => print("&("); eval_node(e); print(")")
-    case Minus(a, b) => eval_node(a); print(" - "); eval_node(b)
+    case Minus(a, b) => print("("); eval_node(a); print(" - "); eval_node(b); print(")")
     case Times(a, b) => eval_node(a); print(" * "); eval_node(b)
     case Plus(a, b) => (a, b) match {
       // ! extract into `summarizeEffects()` function
@@ -53,6 +53,7 @@ object CodegenInternal {
     case Ref(e) => print("*("); eval_node(e); print(")")
     case Tup(hd: Term, tl: Term) => eval_node(hd); eval_node(tl)
     case Null() => ()
+    case Eq(e1, e2) => eval_node(e1); print(" == "); eval_node(e2)
     case Gte(e1, e2) => eval_node(e1); print(" >= "); eval_node(e2)
     case Gt(e1, e2) => eval_node(e1); print(" > "); eval_node(e2)
     case Lt(e1, e2) => eval_node(e1); print(" < "); eval_node(e2)
@@ -71,6 +72,7 @@ object CodegenInternal {
     case BitAnd(n1, n2) => print("("); eval_node(n1); print(" & "); eval_node(n2); print(")")
     case BitOr(n1, n2) => print("("); eval_node(n1); print(" | "); eval_node(n2); print(")")
     case And(a, b) => print("("); eval_node(a); print(" && "); eval_node(b); print(")")
+    case Mod(a, b) => print("("); eval_node(a); print(" % "); eval_node(b); print(")")
     case Or(a, b) => print("("); eval_node(a); print(" || "); eval_node(b); print(")")
     case Define(vr, args, vl) => {
       var defStr = s"#define $vr"

@@ -102,18 +102,29 @@ object TwiddleTests {
 
     def parityTest[T[_]](s:Exp[T]) = {
         import s._
-        // bitParity(bits(num(20)))
-    }
-
-    def parityTest2[T[_]](s:Exp[T]) = {
-        import s._
-        // bitParityParallel(bits(num(20)))
+        // Parity(20) => 1
+        // Parity(19) => 0
+        begin(List(bitParity(bits(num(20))), bitParity(bits(num(19)))))
     }
 
     def forTest[T[_]](s:Exp[T]) = {
         import s._
         for_(num(0), i => lt(i, num(2)), i => add(i, num(1)),
             i => prints[Int](""""%d"""", i))
+    }
+
+    def modTest[T[_]](s:Exp[T]) = {
+        import s._
+        mod(num(12341), num(63))
+    }
+
+    def modTest2[T[_]](s:Exp[T]) = {
+        import s._
+        begin(List(
+                mod(num(25), num(5)), // Standard mod
+                mod(num(25), num(4)), // Power of 2
+                mod(num(25), num(3)) // (Power of 2) - 1
+              ))
     }
 }
 
@@ -128,11 +139,14 @@ object Main {
         check(beginTest(Show), "(cdr (cdr (cdr (cons (if true then log10(3.0)/log10(2) else (2.0 + 5.0)) (cons (5 + 5) (cons (5.0 + log10(3.0)/log10(2)) (log10(5.0)/log10(2) + log10(3.0)/log10(2))))))))")
         check(logTest(Show), "log10(10.0)")
         check(stringTest(Show), "\"Hello, World!\".reverse")
-        check(reversebitTest(Show), "List(0b11100010001100101001101100110001, 0b11100010001110100010100010011000)")
+        check(reversebitTest(Show), "List(0b11000100011001010011011001100011, 0b11000100011101000101000100110000)")
         check(printTest(Show), """(begin , (print "%d\n", log10(10.2)))""")
-        check(hasZeroTest(Show), "(hasZero? 0b00000000000000000000000000001010)")
-        check(swapBitsTest(Show), "(0b00000000000000000000000000001111, 0b00000000000000000000000000001010)")
+        check(hasZeroTest(Show), "(hasZero? 0b00000000000000000000000000010100)")
+        check(swapBitsTest(Show), "(0b00000000000000000000000000011110, 0b00000000000000000000000000010100)")
         check(forTest(Show).split('\n').map(_.trim.filter(_ >= ' ')).mkString, """for(int i = 0, x < 2, (x + 1)) {(print "%d", x)}""")
+        check(parityTest(Show), "(begin , (bits-set-even? 0b00000000000000000000000000010100), (bits-set-even? 0b00000000000000000000000000010011))")
+        check(modTest(Show), "(12341 % 63)")
+        check(modTest2(Show), "(begin , (25 % 5), (25 % 4), (25 % 3))")
     }
 
     def testEval() = {
@@ -149,6 +163,9 @@ object Main {
         check(swapBitsTest(Eval), "(BitSet(1, 2, 3, 4),BitSet(2, 4))")
         check(swapBitsTest2(Eval), "(BitSet(0),BitSet(2, 4))")
         check(forTest(Eval), "()")
+        check(parityTest(Eval), "0")
+        check(modTest(Eval), "56")
+        check(modTest2(Eval), "1")
     }
 
     def testEmitTwiddleAST() = {
@@ -165,8 +182,7 @@ object Main {
         swapBitsTest2(EmitTwiddleAST)
         beginTest(EmitTwiddleAST).asInstanceOf[Term]
         forTest(EmitTwiddleAST).asInstanceOf[Term]
-        // check(parityTest(EmitTwiddleAST), "") // TODO: implement
-        // check(parityTest2(EmitTwiddleAST), "")
+        parityTest(EmitTwiddleAST)
 
         // runsrc(gensrc(ifTest2(EmitTwiddleAST))) // TODO: generates incorrect syntax
     }
@@ -186,6 +202,8 @@ object Main {
         testEval
         testEmitTwiddleAST
         testEmitParallelAST
+
+        gensrc(modTest(EmitTwiddleAST))
 
         println(s"====> $testsRun assertions tested <====")
     }

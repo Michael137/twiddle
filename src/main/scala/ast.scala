@@ -19,6 +19,7 @@ object TwiddleAST {
     case class Num[A](n: A) extends Term
     case class Bool(b: Boolean) extends Term
     case class CStr(s: String) extends Term // C-style string
+    case class Eq(e1: Term, e2: Term) extends Term
     case class Gte(e1: Term, e2: Term) extends Term
     case class Gt(e1: Term, e2: Term) extends Term
     case class Lt(e1: Term, e2: Term) extends Term
@@ -78,7 +79,6 @@ object TwiddleAST {
 
 object ParallelAST {
     import TwiddleAST._
-    type PAST[T] = PTerm
     abstract class PTerm extends ASTNode
 
      // #pragma omp name1(params1..n1) name2(params2...n2) ... nameN(paramsN...nN) { /* body */ }
