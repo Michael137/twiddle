@@ -18,6 +18,7 @@ object Interpreter {
   // Simple evaluator
   type Id[A] = A
   implicit object Eval extends Exp[Id] {
+    implicit def bits2i(b: BitSet): Int = b.foldLeft(0)({ (x,y) => scala.math.pow(2, y).intValue + x })
     implicit def d2i(x: Double): Int = x.toInt
     def null_() = null
     def bits(a: Int): BitSet = BitSet.fromBitMaskNoCopy(Array(a))
@@ -75,6 +76,7 @@ object Interpreter {
   type CString[A] = String
   implicit object Show extends Exp[CString] {
     implicit def d2i(x: String): String = x
+    implicit def bits2i(x: String): String = x
     def null_() = ""
     def bits(a: String): String = {
       var s = ""

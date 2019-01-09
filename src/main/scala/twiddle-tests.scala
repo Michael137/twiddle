@@ -203,9 +203,9 @@ object Main {
     }
 
     def main(args: Array[String]): Unit = {
-        // testPrinter
-        // testEval
-        // testEmitTwiddleAST
+        testPrinter
+        testEval
+        testEmitTwiddleAST
         testEmitParallelAST
 
         println(s"====> $testsRun assertions tested <====")

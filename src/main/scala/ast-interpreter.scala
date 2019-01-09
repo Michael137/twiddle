@@ -30,6 +30,7 @@ object AstInterpreter {
         // Bit operations in the twiddle IR are responsible
         // for declaring 'Num's as 'U's
         implicit def d2i(x: Term): Term = x
+        implicit def bits2i(x: Term): Term = x
         def null_() = Null()
         def bits(a: AST[Int]): Term = a
         def reverseBits(b: Term): Term = {
@@ -156,6 +157,7 @@ object AstInterpreter {
             // Numerator can be number or AST
             val numAST = a match {
                 case Tup(Num(n1), _) => Num(n1.asInstanceOf[Int])
+                case r: Result => r
                 case otherwise => otherwise.asInstanceOf[Tup]
             }
             val Tup(Num(n2), _) = b
@@ -269,13 +271,17 @@ object AstInterpreter {
             val tmpVarName = gensym("tmp")
             val tmp = classTagToVarNode(classTag[A])(tmpVarName)
             val exp = es match {
-                case r: Result => r
+                case r: Result => Result(Var(tmpVarName),
+                                        Tup(r.e,
+                                        Tup(Decl(tmp),
+                                        Tup(Assign(Var(tmpVarName), r.v), Null()))))
                 case _: Tup | _: Var => Result(Var(tmpVarName),
                                             Tup(Decl(tmp),
                                             Tup(Assign(Var(tmpVarName), es),
                                             Null())))
             }
-            Tup(Printf(format, exp), Null())
+
+            Result(Var(tmpVarName), Tup(Printf(format, exp), Null()))
         }
 
         def and(a: AST[Boolean], b: AST[Boolean]): AST[Boolean] = And(a, b)
@@ -300,6 +306,7 @@ object AstInterpreter {
     }
 
     implicit object EmitParallelAST extends Exp[AST] {
+        implicit def bits2i(x: Term): Term = x
         implicit def d2i(x: Term): Term = x
 
         def bits(a: AST[Int]): Term = a

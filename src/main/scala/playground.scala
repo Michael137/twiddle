@@ -8,7 +8,7 @@ import TwiddleAST._
 import Codegen._
 
 object Playground {
-    def example[T[_]](s: Exp[T]) = {
+    def yourExample[T[_]](s: Exp[T]) = {
         import s._
         // Write your code here
 
@@ -26,6 +26,13 @@ object Playground {
                 prints(quote(raw"\nBits: %d"), bits(num(256)))
             )
         )
+    }
+
+    def example[T[_]](s: Exp[T]) = {
+        import s._
+        val a = num(31)
+        (ifThen(hasZero(bits(a)))
+            (() => prints(quote("%d"), mod(bits(log10(num(1234567))), a))))
     }
 
     def main(args: Array[String]): Unit = {
@@ -55,5 +62,7 @@ object Playground {
         val parallel = anotherExample(EmitParallelAST)
         println(parallel)
         eval(parallel) // Print OpenMP annotated C
+
+        println(example(EmitTwiddleAST))
     }
 }

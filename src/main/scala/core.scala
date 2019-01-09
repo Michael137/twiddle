@@ -77,6 +77,7 @@ object Syntax {
 
   trait Bits[T[_]] {
     implicit def d2i(x: T[Double]): T[Int]
+    implicit def bits2i(x: T[BitSet]): T[Int]
     def bits(a: T[Int]): T[BitSet]
     def reverseBits(b: T[BitSet]): T[BitSet]
     def hasZero(b: T[BitSet]): T[Boolean]
