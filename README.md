@@ -44,6 +44,20 @@ if( haszero(x) )
 }
 ```
 
+Using the OpenMP annotation backend:
+```
+x = "Print me in parallel"
+for(i = 0; i < 10000000000; i++)
+ prints(x)
+```
+should produce
+```
+char* x = "Print me in parallel"
+#pragma omp for
+for(int i = 0; i < 10000000000; i++)
+ printf("%s", x)
+```
+
 ## Outstanding Design Choices
 - [x] Choose host language
   - Scala
