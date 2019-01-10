@@ -9,8 +9,8 @@ libraryDependencies ++= Seq(
   "com.chuusai" %% "shapeless" % "2.3.3"
 )
 
-libraryDependencies += "org.scalatest" % "scalatest_2.11" % "2.2.2"
 libraryDependencies += "org.typelevel" %% "spire" % "0.16.0"
+libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value
 
 scalacOptions += "-deprecation"
 scalacOptions += "-feature"

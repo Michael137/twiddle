@@ -130,6 +130,51 @@ value was 1 less than a power of two and enabled a known optimization that remov
 The project structure is adapted to the Scala ``sbt'' build tool. The \textbf{src/main/scala/twiddle-tests.scala} contains feature test cases that showcase some of the functionality of Twiddle. To run them simply
 run following from the the root directory: \texttt{sbt "runMain twiddle.dsl.Main"}
 
+\subsection{``Twiddle Me This'' REPL}
+An alternative mode of operation is the REPL included with the framework.
+\begin{enumerate}
+	\item sbt "runMain twiddle.dsl.REPL"
+	\item Follow instructions in terminal
+\end{enumerate}
+
+\pagebreak
+\subsubsection{Example REPL session}
+\begin{verbatim}
+	$>>sbt ~"runMain twiddle.dsl.REPL"
+	#### Starting Twiddle REPL in twiddle mode ####
+	#### Other options are: 'eval','parallel','print','twiddle' ####
+	#### Toggle code generation mode on/off with 'c'/'!c'
+	#### Press 'q' to quit
+
+	>>> twiddle
+	==> Mode switched to twiddle
+
+	>>> c
+	==> Code generation mode *ON*
+
+	>>> log2(num(15))
+	float x1;
+	int ret2;
+	x1 = 15.0;
+	ret2 = *((const int* )&(x1));
+	ret2 = ((ret2 >> 23) - 127);
+
+	>>> eval
+	==> Mode switched to eval
+
+	>>> log2(num(15))
+	3.9068905956085187
+
+	>>> print
+	==> Mode switched to print
+
+	>>> log2(num(15))
+	log10(15.0)/log10(2)
+\end{verbatim}
+
+This is another useful demonstration of the power behind being able to interpret a language in multiple ways with only a single core language definition.
+Users can switch between twiddling, parallelizing, evaluating, printing or generating code from within the same REPL session.
+
 \subsection{Creating Snippets}
 \begin{enumerate}
 	\item Create a new file or use \textbf{src/main/scala/playground.scala}
