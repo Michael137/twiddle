@@ -178,7 +178,7 @@ object Main {
 
     def testEmitTwiddleAST() = {
         ifTest(EmitTwiddleAST)
-        eval(lamTest(EmitTwiddleAST)) // TODO: no output currently
+        eval(lamTest(EmitTwiddleAST))
         eval(lamTest2(EmitTwiddleAST))
         beginTest(EmitTwiddleAST)
         logTest(EmitTwiddleAST)
