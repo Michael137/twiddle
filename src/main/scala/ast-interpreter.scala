@@ -127,15 +127,13 @@ object AstInterpreter {
         def ifThenElse[A](b: AST[Boolean])(t: (() => AST[A]))(e: (() => AST[A]))(implicit tag: ClassTag[A]): AST[A] =
         {
             val cond = gensym("cond")
-            val conseq = gensym("cons")
-            val alt = gensym("alt")
-            val conseqAST = classTagToVarNode(tag)(conseq)
-            val altAST = classTagToVarNode(tag)(alt)
-            Tup(Decl(I(Var(cond))),
-            Tup(Decl(conseqAST),
-            Tup(Decl(altAST),
-            Tup(Assign(Var(cond), b),
-            Tup(IfThenElse(Var(cond), Assign(Var(conseq), t()), Assign(Var(alt), e())), Null())))))
+            val res = gensym("res")
+            val resAST = classTagToVarNode(tag)(res)
+            Result(Var(res),
+                Tup(Decl(I(Var(cond))),
+                Tup(Decl(resAST),
+                Tup(Assign(Var(cond), b),
+                Tup(IfThenElse(Var(cond), Assign(Var(res), t()), Assign(Var(res), e())), Null())))))
         }
 
         def ifThen[A](b: AST[Boolean])(t: (() => AST[A]))(implicit tag: ClassTag[A]): AST[Unit] =

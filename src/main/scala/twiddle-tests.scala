@@ -191,8 +191,7 @@ object Main {
         beginTest(EmitTwiddleAST).asInstanceOf[Term]
         forTest(EmitTwiddleAST).asInstanceOf[Term]
         parityTest(EmitTwiddleAST)
-
-        // runsrc(gensrc(ifTest2(EmitTwiddleAST))) // TODO: generates incorrect syntax
+        ifTest2(EmitTwiddleAST)
     }
 
     def testEmitParallelAST() = {
