@@ -97,6 +97,10 @@ or to run all tests immediately (and continuously):
 
 1. sbt ~"runMain twiddle.dsl.Main"
 
+or run from the REPL:
+
+1. sbt ~"runMain twiddle.dsl.REPL"
+
 # Resources
 * https://github.com/namin/lms-verify
 * https://www.slideshare.net/krikava/domain-specific-languages-and-scala
